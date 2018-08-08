@@ -110,6 +110,7 @@ PLoop(function(_ENV)
             FIELD_FROM          = 5,
             FIELD_WHERE         = 6,
             FIELD_ORDERBY       = 7,
+            FIELD_LOCK          = 8,
 
             escape              = escape,
             parseSql            = parseSql,
@@ -134,6 +135,10 @@ PLoop(function(_ENV)
             self[FIELD_SELECT]  = fields ~= "" and fields or nil
 
             return self
+        end
+
+        function Lock(self)
+            self[FIELD_LOCK]    = true
         end
 
         function Insert(self, map)
@@ -283,6 +288,10 @@ PLoop(function(_ENV)
                     temp[7]     = ""
                     temp[8]     = ""
                 end
+
+                if self[FIELD_LOCK] then
+                    temp[9]     = "FOR UPDATE"
+                end
             elseif sqltype == SQLTYPE_UPDATE then
                 temp[1]         = "UPDATE"
 
@@ -361,6 +370,12 @@ PLoop(function(_ENV)
         -----------------------------------------------------------
         --                        method                         --
         -----------------------------------------------------------
+        --- Begin the transaction
+        function Begin(self)
+            self.Connection:Execute(ISOLATION_QUERY[self.Isolation])
+            self:Execute("BEGIN")
+        end
+
         --- Commits the database transaction
         function Commit(self)
             self.Connection:Execute("COMMIT")
@@ -378,9 +393,6 @@ PLoop(function(_ENV)
         function __ctor(self, conn, isolation)
             self.Connection = conn
             self.Isolation  = isolation
-
-            conn:Execute(ISOLATION_QUERY[isolation])
-            conn:Execute("BEGIN")
         end
     end)
 
@@ -428,7 +440,7 @@ PLoop(function(_ENV)
         -----------------------------------------------------------
         --- Begins a database transaction.
         __Arguments__{ TransactionIsolation/TransactionIsolation.REPEATABLE_READ }
-        function BeginTransaction(self, isolation)
+        function NewTransaction(self, isolation)
             return MySQLTransaction(self, isolation)
         end
 
