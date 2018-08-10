@@ -139,6 +139,8 @@ PLoop(function(_ENV)
 
         function Lock(self)
             self[FIELD_LOCK]    = true
+
+            return self
         end
 
         function Insert(self, map)
@@ -373,7 +375,7 @@ PLoop(function(_ENV)
         --- Begin the transaction
         function Begin(self)
             self.Connection:Execute(ISOLATION_QUERY[self.Isolation])
-            self:Execute("BEGIN")
+            self.Connection:Execute("BEGIN")
         end
 
         --- Commits the database transaction
