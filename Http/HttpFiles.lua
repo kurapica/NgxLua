@@ -43,8 +43,15 @@ PLoop(function(_ENV)
         class "HttpFile" (function(_ENV)
 
             export {
-                System.IO.FileWriter, System.IO.Path, FileHash, GetPhysicalPath = Web.GetPhysicalPath,
-                max = math.max, type = type, error = error
+                System.IO.FileWriter, System.IO.Path, FileHash,
+                GetPhysicalPath     = Web.GetPhysicalPath,
+                GetDirectory        = System.IO.Path.GetDirectory,
+                IsDirExisted        = System.IO.Directory.Exist,
+                CreateDir           = System.IO.Directory.Create,
+                DeleteFile          = System.IO.File.Delete,
+                max                 = math.max,
+                type                = type,
+                error               = error,
             }
 
             local strlib            = require("resty.string")
@@ -71,6 +78,9 @@ PLoop(function(_ENV)
             --- the file's size
             property "Size" { set = false, get = function(self) return self[2] or nil end }
 
+            --- the file's path
+            property "Path" { set = false, get = function(self) return self[4] or nil end }
+
             -----------------------------------------------------------
             --                        method                         --
             -----------------------------------------------------------
@@ -79,8 +89,12 @@ PLoop(function(_ENV)
                 local writer
 
                 if type(target) == "string" then
+                    self[4]         = target
                     local realpath  = GetPhysicalPath(target) or target
+                    local dir       = GetDirectory(realpath)
+                    if not IsDirExisted(dir) then CreateDir(dir) end
                     writer          = FileWriter(realpath, "wb")
+                    self[5]         = realpath
                 else
                     writer          = target
                 end
@@ -166,11 +180,15 @@ PLoop(function(_ENV)
                 return finished
             end
 
+            function Delete(self)
+                if self[5] then DeleteFile(self[5]) end
+            end
+
             -----------------------------------------------------------
             --                      constructor                      --
             -----------------------------------------------------------
             function __new(_, file, form, maxsize)
-                return { [-1] = maxsize, [0] = form, Path.GetFileName(file), false, false }, false
+                return { [-1] = maxsize, [0] = form, Path.GetFileName(file), false, false, false, false }, false
             end
         end)
 

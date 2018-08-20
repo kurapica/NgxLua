@@ -20,7 +20,7 @@ PLoop(function(_ENV)
             ngx                 = _G.ngx,
             strtrim             = function(s) return s and (s:gsub("^%s*(.-)%s*$", "%1")) or "" end,
 
-            HttpMethod,
+            HttpMethod, HttpFiles
         }
 
         -----------------------------------------------------------
