@@ -32,6 +32,11 @@ PLoop(function(_ENV)
     end
 
     -----------------------------------------------------------------------
+    --                        System.Date Modify                         --
+    -----------------------------------------------------------------------
+    System.Date.GetTimeOfDay = ngx.time
+
+    -----------------------------------------------------------------------
     --                          Logger Binding                           --
     -----------------------------------------------------------------------
     System.Logger.Default:AddHandler(getLogHandler(ngx.CRIT),    System.Logger.LogLevel.Fatal)
