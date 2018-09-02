@@ -11,7 +11,8 @@
 -- Update Date  :   2018/04/03                                               --
 -- Version      :   1.0.0                                                    --
 --===========================================================================--
-require "PLoopWeb"
+require "PLoop.System.Web"
+require "PLoop.System.Data"
 
 -- Loading modules
 require "NgxLua.Http.HttpFiles"
