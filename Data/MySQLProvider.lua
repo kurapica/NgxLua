@@ -18,13 +18,13 @@ PLoop(function(_ENV)
 
     class "MySQLConnection" {}
 
-    export { DBNull, "type", "tostring", "select", "error", quote_sql_str = ngx.quote_sql_str, parseindex = Toolset.parseindex }
+    export { DBNull, "type", "tostring", "select", "error", quote_sql_str = ngx.quote_sql_str, parseindex = Toolset.parseindex, parseValue = System.Data.ParseValue }
 
     System.Web.SetValueString(ngx.null, "")
     System.Data.AddNullValue(ngx.null)
 
     function escape(val)
-        if val == DBNull then return "NULL" end
+        if parseValue(val) == nil then return "NULL" end
 
         local vtype = type(val)
 
@@ -58,40 +58,39 @@ PLoop(function(_ENV)
         return sql
     end
 
-    --- The connection option for MySQL server
     __Sealed__() struct "ConnectionOption" (function(_ENV)
         --- the host name for the MySQL server
-        member "host" { type = String }
+        member "host"           { type = String, default = "127.0.0.1" }
 
         --- the port that the MySQL server is listening on
-        member "port" { type = Integer, default = 3306 }
+        member "port"           { type = Integer, default = 3306 }
 
         --- the path of the unix socket file listened by the MySQL server
-        member "path" { type = String }
+        member "path"           { type = String }
 
         --- the MySQL database name
-        member "database" { type = String }
+        member "database"       { type = String }
 
         --- the MySQL account name for login
-        member "user" { type = String }
+        member "user"           { type = String }
 
         --- MySQL account password for login
-        member "password" { type = String }
+        member "password"       { type = String }
 
         --- the character set used on the MySQL connection
-        member "charset" { type = String , default = "utf8mb4" }
+        member "charset"        { type = String , default = "utf8mb4" }
 
         --- the upper limit for the reply packets sent from the MySQL server
-        member "max_packet_size" { type = Integer }
+        member "max_packet_size"{ type = Integer }
 
         --- whether use the SSL to connect to the MySQL server
-        member "ssl" { type = Boolean }
+        member "ssl"            { type = Boolean }
 
         --- whether verifies the validity of the server SSL certificate
-        member "ssl_verify" { type = Boolean }
+        member "ssl_verify"     { type = Boolean }
 
         --- the name for the MySQL connection pool
-        member "pool" { type = String }
+        member "pool"           { type = String }
     end)
 
     __Sealed__() class "MySQLBuilder" (function(_ENV)
@@ -423,19 +422,22 @@ PLoop(function(_ENV)
         --                       property                        --
         -----------------------------------------------------------
         --- The query builder class
-        property "SqlBuilder" { set = false, default = MySQLBuilder }
+        property "SqlBuilder"   { set = false, default = MySQLBuilder }
 
         --- The option of the connection
-        property "Option" { type = ConnectionOption, field = "__DBConnection_Option" }
+        property "Option"       { type = ConnectionOption, field = 1 }
 
         --- Keep the connection alive after close it
-        property "KeepAlive" { type = Boolean, default = true }
+        property "KeepAlive"    { type = Boolean, default = true }
 
-        --- The max idle time to keep the connection alive
-        property "MaxIdleTime" { type = Integer, default = 10000 }
+        --- The max idle time to keep the connection alive(ms)
+        property "MaxIdleTime"  { type = Integer, default = 10000 }
 
         --- The connection pool size
-        property "PoolSize" { type = Integer, default = 50 }
+        property "PoolSize"     { type = Integer, default = 50 }
+
+        --- The timeout protection for operations(ms)
+        property "TimeOut"      { type = NaturalNumber, default = 1000, handler = function(self, val) self[0]:set_timeout(val or 1000) end }
 
         -----------------------------------------------------------
         --                        method                         --
@@ -478,11 +480,8 @@ PLoop(function(_ENV)
             Trace("[Database][OPEN]")
 
             self.State = State_Open
-        end
 
-        --- Set the timeout(ms) protection for operations
-        function SetTimeout(self, timeout)
-            self[0]:set_timeout(time)
+            self[0]:set_timeout(self.TimeOut)
         end
 
         --- Sends the query sql to the remote MySQL server
@@ -683,14 +682,13 @@ PLoop(function(_ENV)
         -----------------------------------------------------------
         --                      constructor                      --
         -----------------------------------------------------------
-        __Arguments__{ ConnectionOption/nil }
+        __Arguments__{ ConnectionOption }
         function __new(self, opt)
             local db, err = mysql:new()
 
             if not db then throw(err) end
 
-            return { [0] = db, __DBConnection_Option = opt }, true
+            return { [0] = db, [1] = opt }, true
         end
     end)
-
 end)
