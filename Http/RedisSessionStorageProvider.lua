@@ -17,7 +17,7 @@ PLoop(function(_ENV)
     __Sealed__() class "NgxLua.RedisSessionStorageProvider" (function (_ENV)
         extend "ICacheSessionStorageProvider"
 
-        export { Redis }
+        export { NgxLua.Redis }
 
         -----------------------------------------------------------------------
         --                              method                               --

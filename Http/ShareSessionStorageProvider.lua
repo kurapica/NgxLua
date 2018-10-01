@@ -15,7 +15,7 @@
 PLoop(function(_ENV)
     --- A session storage provider based on the ngx.shared.DICT
     __Sealed__() class "NgxLua.ShareSessionStorageProvider" (function (_ENV)
-        extend "ICacheSessionStorageProvider"
+        extend "System.Web.ICacheSessionStorageProvider"
 
         export {
             ngx                 = _G.ngx,

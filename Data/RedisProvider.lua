@@ -20,11 +20,11 @@ PLoop(function(_ENV)
         local redis 			= require "resty.redis"
 
         export {
-            State_Closed        = ConnectionState.Closed,
-            State_Open          = ConnectionState.Open,
-            State_Connecting    = ConnectionState.Connecting,
-            State_Executing     = ConnectionState.Executing,
-            State_Fetching      = ConnectionState.Fetching,
+            State_Closed        = System.Data.ConnectionState.Closed,
+            State_Open          = System.Data.ConnectionState.Open,
+            State_Connecting    = System.Data.ConnectionState.Connecting,
+            State_Executing     = System.Data.ConnectionState.Executing,
+            State_Fetching      = System.Data.ConnectionState.Fetching,
 
             Trace               = System.Logger.Default[System.Logger.LogLevel.Trace],
 
@@ -32,7 +32,7 @@ PLoop(function(_ENV)
             parseValue 			= System.Data.ParseValue,
             strlower            = string.lower,
 
-            Date
+            Date, System.Data.ConnectionState
         }
 
 	    __Sealed__() struct "ConnectionOption" (function(_ENV)

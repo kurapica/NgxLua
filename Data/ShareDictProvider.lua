@@ -42,7 +42,7 @@ PLoop(function(_ENV)
         __Arguments__{ Any, Any, Date/nil }
         function Set(self, key, value, expiretime)
             local tvalue        = type(value)
-            local ok, err       = self[1]:set(key, serialize(stringProvider, item), expiretime and (expiretime - Date.Now) or nil)
+            local ok, err       = self[1]:set(key, serialize(stringProvider, value), expiretime and (expiretime - Date.Now) or nil)
             if not ok then error("Usage: ShareDict:Set(key, value, expire) - " .. err, 2) end
         end
 
