@@ -15,7 +15,7 @@ PLoop(function(_ENV)
     namespace "NgxLua"
 
     __Sealed__() class "Redis" (function(_ENV)
-        extend "System.Data.ICache" "System.IAutoClose"
+        extend "System.Data.ICache"
 
         local redis 			= require "resty.redis"
 
@@ -55,23 +55,23 @@ PLoop(function(_ENV)
         -----------------------------------------------------------
         --                       property                        --
         -----------------------------------------------------------
-        --- The connection state
-        property "State"      	{ type = ConnectionState, default = State_Closed }
-
         --- The option of the connection
-        property "Option" 		{ type = ConnectionOption, field = 1 }
+        property "Option"       { field = 2, type = ConnectionOption }
+
+        --- The connection state
+        property "State"      	{ field = 3, type = ConnectionState, default = State_Closed }
 
         --- Keep the connection alive after close it
-        property "KeepAlive" 	{ type = Boolean, default = true }
+        property "KeepAlive" 	{ field = 4, type = Boolean, default = true }
 
         --- The max idle time to keep the connection alive(ms)
-        property "MaxIdleTime" 	{ type = NaturalNumber, default = 10000 }
+        property "MaxIdleTime" 	{ field = 5, type = NaturalNumber, default = 10000 }
 
         --- The connection pool size
-        property "PoolSize" 	{ type = NaturalNumber, default = 50 }
+        property "PoolSize" 	{ field = 6, type = NaturalNumber, default = 50 }
 
         --- The timeout protection for operations(ms)
-        property "TimeOut"      { type = NaturalNumber, default = 1000, handler = function(self, val) self[0]:set_timeout(val or 1000) end }
+        property "TimeOut"      { field = 7, type = NaturalNumber, default = 1000, handler = function(self, val) self[1]:set_timeout(val or 1000) end }
 
         -----------------------------------------------------------
         --                        method                         --
@@ -81,10 +81,10 @@ PLoop(function(_ENV)
             if self.State == State_Closed then return end
 
             if self.KeepAlive then
-                local ok, err = self[0]:set_keepalive(self.MaxIdleTime, self.PoolSize)
+                local ok, err = self[1]:set_keepalive(self.MaxIdleTime, self.PoolSize)
                 if not ok then error("Usage: Redis:Close() - " .. (err or "failed"), 2) end
             else
-                local ok, err = self[0]:close()
+                local ok, err = self[1]:close()
                 if not ok then error("Usage: Redis:Close() - " .. (err or "failed"), 2) end
             end
 
@@ -101,9 +101,9 @@ PLoop(function(_ENV)
         	local ok, err
 
         	if opt.path then
-        		ok, err 	= self[0]:connect(opt.path, opt.pool and { pool = opt.pool })
+        		ok, err 	= self[1]:connect(opt.path, opt.pool and { pool = opt.pool })
         	else
-        		ok, err 	= self[0]:connect(opt.host, opt.port, opt.pool and { pool = opt.pool })
+        		ok, err 	= self[1]:connect(opt.host, opt.port, opt.pool and { pool = opt.pool })
         	end
 
             if not ok then
@@ -114,7 +114,7 @@ PLoop(function(_ENV)
 
             self.State = State_Open
 
-            self[0]:set_timeout(self.TimeOut)
+            self[1]:set_timeout(self.TimeOut)
         end
 
 		--- Set key-value pair to the cache
@@ -164,9 +164,9 @@ PLoop(function(_ENV)
         --- Execute command and return the result
         __Arguments__{ NEString, Any * 0 }
         function Execute(self, command, ...)
-            local cmd = self[0][strlower(command)]
+            local cmd = self[1][strlower(command)]
             if cmd then
-                local res, err = cmd(self[0], ...)
+                local res, err = cmd(self[1], ...)
                 if err then error("Redis:Execute(command, ...) - " .. err, 2) end
                 return parseValue(res)
             end
@@ -178,10 +178,8 @@ PLoop(function(_ENV)
         __Arguments__{ ConnectionOption/nil }
         function __new(self, opt)
             local cache, err = redis:new()
-
             if not cache then throw(err) end
-
-            return { [0] = cache, [1] = opt or ConnectionOption() }, true
+            return { cache, opt or ConnectionOption() }, true
         end
     end)
 end)

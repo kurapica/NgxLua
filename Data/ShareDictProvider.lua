@@ -15,138 +15,67 @@ PLoop(function(_ENV)
     namespace "NgxLua"
 
     __Sealed__() class "ShareDict" (function(_ENV)
-        extend "System.Data.ICache" "System.IAutoClose"
+        extend "System.Data.ICache"
 
+        export {
+            pairs               = pairs,
+            type                = type,
+
+            serialize           = Serialization.Serialize,
+            deserialize         = Serialization.Deserialize,
+            ngx                 = _G.ngx,
+
+            stringProvider      = Serialization.StringFormatProvider{ ObjectTypeIgnored = true, Indent = false, LineBreak = "" },
+
+            Date,
+        }
         -----------------------------------------------------------
         --                       property                        --
         -----------------------------------------------------------
-        --- The connection state
-        property "State"      	{ type = ConnectionState, default = State_Closed }
-
-        --- The option of the connection
-        property "Option" 		{ type = ConnectionOption, field = 1 }
-
-        --- Keep the connection alive after close it
-        property "KeepAlive" 	{ type = Boolean, default = true }
-
-        --- The max idle time to keep the connection alive(ms)
-        property "MaxIdleTime" 	{ type = NaturalNumber, default = 10000 }
-
-        --- The connection pool size
-        property "PoolSize" 	{ type = NaturalNumber, default = 50 }
-
-        --- The timeout protection for operations(ms)
-        property "TimeOut"      { type = NaturalNumber, default = 1000, handler = function(self, val) self[0]:set_timeout(val or 1000) end }
+        --- the shared table provided by the openresty
+        property "Storage" { set = false, field = 1 }
 
         -----------------------------------------------------------
         --                        method                         --
         -----------------------------------------------------------
-        --- Closes the connection to the redis.
-        function Close(self)
-            if self.State == State_Closed then return end
-
-            if self.KeepAlive then
-                local ok, err = self[0]:set_keepalive(self.MaxIdleTime, self.PoolSize)
-                if not ok then error("Usage: Redis:Close() - " .. (err or "failed"), 2) end
-            else
-                local ok, err = self[0]:close()
-                if not ok then error("Usage: Redis:Close() - " .. (err or "failed"), 2) end
-            end
-
-            Trace("[Redis][CLOSE]")
-
-            self.State = State_Closed
-        end
-
-        --- Opens a redis connection with the settings specified by the ConnectionString property of the provider-specific Connection object.
-        function Open(self)
-        	if self.State ~= State_Closed then return end
-
-        	local opt 		= self.Option
-        	local ok, err
-
-        	if opt.path then
-        		ok, err 	= self[0]:connect(opt.path, opt.pool and { pool = opt.pool })
-        	else
-        		ok, err 	= self[0]:connect(opt.host, opt.port, opt.pool and { pool = opt.pool })
-        	end
-
-            if not ok then
-                error("Usage: Redis:Open() - connect failed:" .. (err or "unknown"), 2)
-            end
-
-            Trace("[Redis][OPEN]")
-
-            self.State = State_Open
-
-            self[0]:set_timeout(self.TimeOut)
-        end
-
 		--- Set key-value pair to the cache
-        __Arguments__{ NEString, Any, Date }
+        __Arguments__{ Any, Any, Date/nil }
         function Set(self, key, value, expiretime)
-            self:Execute("set", key, value)
-            self:Execute("expireat", key, expiretime.Time)
-        end
-
-        __Arguments__{ NEString, Any, NaturalNumber/nil }
-        function Set(self, key, value, expiretime)
-            self:Execute("set", key, value)
-            if expiretime then
-                self:Execute("expire", key, expiretime)
-            end
+            local tvalue        = type(value)
+            local ok, err       = self[1]:set(key, serialize(stringProvider, item), expiretime and (expiretime - Date.Now) or nil)
+            if not ok then error("Usage: ShareDict:Set(key, value, expire) - " .. err, 2) end
         end
 
         --- Set the expire time for a key
-        __Arguments__{ NEString, Date }
+        __Arguments__{ Any, Date }
         function SetExpireTime(self, key, expiretime)
-            self:Execute("expireat", key, expiretime.Time)
-        end
-
-        __Arguments__{ NEString, NaturalNumber }
-        function SetExpireTime(self, key, expiretime)
-            self:Execute("expire", key, expiretime)
+            self[1]:set(key, self[1]:get(key) or "", expiretime - Date.Now)
         end
 
         --- Get value for a key
-        __Arguments__{ NEString }
         function Get(self, key)
-            return self:Execute("get", key)
+            local value         = self[1]:get(key)
+            if value then return deserialize(stringProvider, value) end
+            return value
         end
 
         --- Whether the key existed in the cache
-        __Arguments__{ NEString }
         function Exist(self, key)
-            return self:Execute("exists", key) == 1
+            return self[1]:get(key) ~= nil
         end
 
         --- Delete a key from the cache
-        __Arguments__{ NEString }
         function Delete(self, key)
-            self:Execute("del", key)
-        end
-
-        --- Execute command and return the result
-        __Arguments__{ NEString, Any * 0 }
-        function Execute(self, command, ...)
-            local cmd = self[0][strlower(command)]
-            if cmd then
-                local res, err = cmd(self[0], ...)
-                if err then error("Redis:Execute(command, ...) - " .. err, 2) end
-                return parseValue(res)
-            end
+            self[1]:delete(key)
         end
 
         -----------------------------------------------------------
         --                      constructor                      --
         -----------------------------------------------------------
-        __Arguments__{ ConnectionOption/nil }
-        function __new(self, opt)
-            local cache, err = redis:new()
+        __Arguments__{ String }
+        function __new(self, storage) return { ngx.shared[storage] }, true end
 
-            if not cache then throw(err) end
-
-            return { [0] = cache, [1] = opt or ConnectionOption() }, true
-        end
+        __Arguments__{ Table }
+        function __new(self, storage) return { storage }, true end
     end)
 end)

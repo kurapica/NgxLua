@@ -15,13 +15,17 @@ require "PLoop.System.Web"
 require "PLoop.System.Data"
 
 -- Loading modules
+require "NgxLua.Data.ShareDictProvider"
+require "NgxLua.Data.RedisProvider"
+require "NgxLua.Data.MySQLProvider"
+
 require "NgxLua.Http.HttpFiles"
 require "NgxLua.Http.HttpRequest"
 require "NgxLua.Http.HttpResponse"
 require "NgxLua.Http.HttpContext"
 require "NgxLua.Http.ShareSessionStorageProvider"
+require "NgxLua.Http.RedisSessionStorageProvider"
 require "NgxLua.Thread.LockManager"
-require "NgxLua.Data.MySQLProvider"
 
 import "NgxLua"
 
