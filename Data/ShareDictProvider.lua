@@ -25,7 +25,7 @@ PLoop(function(_ENV)
             deserialize         = Serialization.Deserialize,
             ngx                 = _G.ngx,
 
-            stringProvider      = Serialization.StringFormatProvider{ ObjectTypeIgnored = true, Indent = false, LineBreak = "" },
+            stringProvider      = Serialization.StringFormatProvider{ ObjectTypeIgnored = false, Indent = false, LineBreak = "" },
 
             Date,
         }

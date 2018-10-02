@@ -32,6 +32,11 @@ PLoop(function(_ENV)
             parseValue 			= System.Data.ParseValue,
             strlower            = string.lower,
 
+            serialize           = Serialization.Serialize,
+            deserialize         = Serialization.Deserialize,
+
+            stringProvider      = Serialization.StringFormatProvider{ ObjectTypeIgnored = false, Indent = false, LineBreak = "" },
+
             Date, System.Data.ConnectionState
         }
 
@@ -120,13 +125,13 @@ PLoop(function(_ENV)
 		--- Set key-value pair to the cache
         __Arguments__{ NEString, Any, Date }
         function Set(self, key, value, expiretime)
-            self:Execute("set", key, value)
+            self:Execute("set", key, serialize(stringProvider, value))
             self:Execute("expireat", key, expiretime.Time)
         end
 
         __Arguments__{ NEString, Any, NaturalNumber/nil }
         function Set(self, key, value, expiretime)
-            self:Execute("set", key, value)
+            self:Execute("set", key, serialize(stringProvider, value))
             if expiretime then
                 self:Execute("expire", key, expiretime)
             end
@@ -146,7 +151,8 @@ PLoop(function(_ENV)
         --- Get value for a key
         __Arguments__{ NEString }
         function Get(self, key)
-            return self:Execute("get", key)
+            local value = self:Execute("get", key)
+            if value then return deserialize(stringProvider, value) end
         end
 
         --- Whether the key existed in the cache
