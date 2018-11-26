@@ -18,7 +18,7 @@ PLoop(function(_ENV)
 
     class "MySQLConnection" {}
 
-    export { DBNull, "type", "tostring", "select", "error", quote_sql_str = ngx.quote_sql_str, parseindex = Toolset.parseindex, parseValue = System.Data.ParseValue }
+    export { List, DBNull, "type", "tostring", "select", "error", "ipairs", quote_sql_str = ngx.quote_sql_str, parseindex = Toolset.parseindex, parseValue = System.Data.ParseValue }
 
     System.Web.SetValueString(ngx.null, "")
     System.Data.AddNullValue(ngx.null)
@@ -32,6 +32,15 @@ PLoop(function(_ENV)
             return val and "1" or "0"
         elseif vtype == "string" then
             return quote_sql_str(val)
+        elseif vtype == "table" then
+            local tmp       = List()
+            for i, v in ipairs(val) do
+                v           = escape(v)
+                if v then
+                    tmp:Insert(v)
+                end
+            end
+            return tmp:Join(", ")
         else
             return tostring(val)
         end
