@@ -38,10 +38,15 @@ PLoop(function(_ENV)
         -----------------------------------------------------------
         --                        method                         --
         -----------------------------------------------------------
+        --- Try sets the the value with non-exist key to the cache, return true if success
+        function TrySet(self, key, value, expiretime)
+            local ok, err       = self[1]:add(key, serialize(stringProvider, value), expiretime and (expiretime - Date.Now) or 0)
+            return ok
+        end
+
 		--- Set key-value pair to the cache
         __Arguments__{ Any, Any, Date/nil }
         function Set(self, key, value, expiretime)
-            local tvalue        = type(value)
             local ok, err       = self[1]:set(key, serialize(stringProvider, value), expiretime and (expiretime - Date.Now) or 0)
             if not ok then error("Usage: ShareDict:Set(key, value, expire) - " .. err, 2) end
         end

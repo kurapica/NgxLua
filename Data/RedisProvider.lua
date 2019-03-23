@@ -122,6 +122,25 @@ PLoop(function(_ENV)
             self[1]:set_timeout(self.TimeOut)
         end
 
+        --- Try sets the the value with non-exist key to the cache, return true if success
+        __Arguments__{ NEString, Any, Date }
+        function TrySet(self, key, value, expiretime)
+            if 1 == self:Execute("setnx", key, serialize(stringProvider, value)) then
+                self:Execute("expireat", key, expiretime.Time)
+                return true
+            end
+            return false
+        end
+
+        __Arguments__{ NEString, Any, NaturalNumber/nil }
+        function TrySet(self, key, value, expiretime)
+            if 1 == self:Execute("setnx", key, serialize(stringProvider, value)) then
+                if expiretime then self:Execute("expire", key, expiretime) end
+                return true
+            end
+            return false
+        end
+
 		--- Set key-value pair to the cache
         __Arguments__{ NEString, Any, Date }
         function Set(self, key, value, expiretime)
