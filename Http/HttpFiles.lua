@@ -52,6 +52,7 @@ PLoop(function(_ENV)
                 max                 = math.max,
                 type                = type,
                 error               = error,
+                with                = with,
             }
 
             local strlib            = require("resty.string")

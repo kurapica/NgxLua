@@ -8,8 +8,8 @@
 -- Author       :   kurapica125@outlook.com                                  --
 -- URL          :   http://github.com/kurapica/PLoop                         --
 -- Create Date  :   2015/10/22                                              --
--- Update Date  :   2018/04/03                                               --
--- Version      :   1.0.0                                                    --
+-- Update Date  :   2019/04/22                                               --
+-- Version      :   1.0.1                                                    --
 --===========================================================================--
 
 PLoop(function(_ENV)
@@ -20,7 +20,7 @@ PLoop(function(_ENV)
             ngx                 = _G.ngx,
             strtrim             = function(s) return s and (s:gsub("^%s*(.-)%s*$", "%1")) or "" end,
 
-            HttpMethod, HttpFiles
+            HttpMethod, NgxLua.HttpFiles
         }
 
         -----------------------------------------------------------
