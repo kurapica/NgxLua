@@ -119,6 +119,8 @@ PLoop(function(_ENV)
             FIELD_WHERE         = 6,
             FIELD_ORDERBY       = 7,
             FIELD_LOCK          = 8,
+            FIELD_LIMIT         = 9,
+            FIELD_OFFSET        = 10,
 
             escape              = escape,
             parseSql            = parseSql,
@@ -273,84 +275,97 @@ PLoop(function(_ENV)
             return self
         end
 
+        function Limit(self, limit)
+            self[FIELD_LIMIT]   = limit
+        end
+
+        function Offset(self, offset)
+            self[FIELD_OFFSET]  = offset
+        end
+
         function ToSql(self)
             local temp          = {}
 
             local sqltype       = self[FIELD_SQLTYPE]
+            local index         = 1
 
             if not sqltype then return end
 
             if sqltype == SQLTYPE_SELECT then
-                temp[1]         = "SELECT"
-                temp[2]         = self[FIELD_SELECT] or "*"
-                temp[3]         = "FROM"
+                temp[index]     = "SELECT";                     index = index + 1
+                temp[index]     = self[FIELD_SELECT] or "*";    index = index + 1
+                temp[index]     = "FROM";                       index = index + 1
 
                 if not self[FIELD_FROM] then return end
-                temp[4]         = self[FIELD_FROM]
+                temp[index]     = self[FIELD_FROM];             index = index + 1
 
                 if self[FIELD_WHERE] then
-                    temp[5]     = "WHERE"
-                    temp[6]     = self[FIELD_WHERE]
-                else
-                    temp[5]     = ""
-                    temp[6]     = ""
+                    temp[index] = "WHERE";                      index = index + 1
+                    temp[index] = self[FIELD_WHERE];            index = index + 1
                 end
 
                 if self[FIELD_ORDERBY] then
-                    temp[7]     = "ORDER BY"
-                    temp[8]     = self[FIELD_ORDERBY]
-                else
-                    temp[7]     = ""
-                    temp[8]     = ""
+                    temp[index] = "ORDER BY";                   index = index + 1
+                    temp[index] = self[FIELD_ORDERBY];          index = index + 1
+                end
+
+                if self[FIELD_LIMIT] then
+                    temp[index] = "LIMIT";                      index = index + 1
+                    temp[index] = tostring(self[FIELD_LIMIT]);  index = index + 1
+                end
+
+                if self[FIELD_OFFSET] then
+                    temp[index] = "OFFSET";                     index = index + 1
+                    temp[index] = tostring(self[FIELD_OFFSET]); index = index + 1
                 end
 
                 if self[FIELD_LOCK] then
-                    temp[9]     = "FOR UPDATE"
+                    temp[index] = "FOR UPDATE";                 index = index + 1
                 end
             elseif sqltype == SQLTYPE_UPDATE then
-                temp[1]         = "UPDATE"
+                temp[index]     = "UPDATE";                     index = index + 1
 
                 if not self[FIELD_FROM] then return end
-                temp[2]         = self[FIELD_FROM]
-                temp[3]         = "SET"
+                temp[index]     = self[FIELD_FROM];             index = index + 1
+                temp[index]     = "SET";                        index = index + 1
 
                 if not self[FIELD_UPDATE] then return end
-                temp[4]         = self[FIELD_UPDATE]
+                temp[index]     = self[FIELD_UPDATE];           index = index + 1
 
                 if self[FIELD_WHERE] then
-                    temp[5]     = "WHERE"
-                    temp[6]     = self[FIELD_WHERE]
+                    temp[index] = "WHERE";                      index = index + 1
+                    temp[index] = self[FIELD_WHERE];            index = index + 1
                 else
                     return
                 end
             elseif sqltype == SQLTYPE_DELETE then
-                temp[1]         = "DELETE FROM"
+                temp[index]     = "DELETE FROM";                index = index + 1
 
                 if not self[FIELD_FROM] then return end
-                temp[2]         = self[FIELD_FROM]
+                temp[index]     = self[FIELD_FROM];             index = index + 1
 
                 if self[FIELD_WHERE] then
-                    temp[3]     = "WHERE"
-                    temp[4]     = self[FIELD_WHERE]
+                    temp[index] = "WHERE";                      index = index + 1
+                    temp[index] = self[FIELD_WHERE];            index = index + 1
                 else
                     return
                 end
             elseif sqltype == SQLTYPE_INSERT then
-                temp[1]         = "INSERT INTO"
+                temp[index]     = "INSERT INTO";                index = index + 1
 
                 if not self[FIELD_FROM] then return end
-                temp[2]         = self[FIELD_FROM]
+                temp[index]     = self[FIELD_FROM];             index = index + 1
 
                 if not self[FIELD_SELECT] then return end
 
-                temp[3]         = "("
-                temp[4]         = self[FIELD_SELECT]
-                temp[5]         = ") VALUES ("
+                temp[index]     = "(";                          index = index + 1
+                temp[index]     = self[FIELD_SELECT];           index = index + 1
+                temp[index]     = ") VALUES (";                 index = index + 1
 
                 if not self[FIELD_INSERT] then return end
 
-                temp[6]         = self[FIELD_INSERT]
-                temp[7]         = ")"
+                temp[index]     = self[FIELD_INSERT];           index = index + 1
+                temp[index]     = ")";                          index = index + 1
             end
 
             return tblconcat(temp, " ")
@@ -368,6 +383,9 @@ PLoop(function(_ENV)
                 [FIELD_FROM]    = false,
                 [FIELD_WHERE]   = false,
                 [FIELD_ORDERBY] = false,
+                [FIELD_LOCK]    = false,
+                [FIELD_LIMIT]   = false,
+                [FIELD_OFFSET]  = false,
             }, true
         end
     end)
