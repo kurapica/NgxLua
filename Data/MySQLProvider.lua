@@ -8,8 +8,8 @@
 -- Author       :   kurapica125@outlook.com                                  --
 -- URL          :   http://github.com/kurapica/PLoop                         --
 -- Create Date  :   2018/06/07                                               --
--- Update Date  :   2018/06/07                                               --
--- Version      :   1.0.0                                                    --
+-- Update Date  :   2019/05/17                                               --
+-- Version      :   1.1.0                                                    --
 --===========================================================================--
 PLoop(function(_ENV)
     namespace "NgxLua.MySQL"
@@ -126,6 +126,7 @@ PLoop(function(_ENV)
             tblconcat           = table.concat,
             tostring            = tostring,
             pairs               = pairs,
+            select              = select,
         }
 
         -----------------------------------------------------------
@@ -218,13 +219,15 @@ PLoop(function(_ENV)
             return self
         end
 
-       function From(self, name)
+        function From(self, name)
             self[FIELD_FROM]    = name
             return self
         end
 
         function Where(self, condition, ...)
-            if type(condition) == "table" then
+            local ty            = type(condition)
+
+            if ty == "table" then
                 local temp      = {}
                 local index     = 1
                 local first     = true
@@ -247,8 +250,10 @@ PLoop(function(_ENV)
                 end
 
                 condition       = tblconcat(temp, "")
+            elseif ty == "string" then
+                condition       = parseSql(condition, ...)
             else
-                condition       = tostring(condition)
+                error("Usage: MySQLBuilder:Where(condition[, ...]) - the condition can only be table or string", 2)
             end
 
             self[FIELD_WHERE]   = condition ~= "" and condition or nil
