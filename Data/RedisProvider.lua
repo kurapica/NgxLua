@@ -8,8 +8,8 @@
 -- Author       :   kurapica125@outlook.com                                  --
 -- URL          :   http://github.com/kurapica/PLoop                         --
 -- Create Date  :   2018/09/07                                               --
--- Update Date  :   2018/09/07                                               --
--- Version      :   1.0.0                                                    --
+-- Update Date  :   2019/06/06                                               --
+-- Version      :   1.1.0                                                    --
 --===========================================================================--
 PLoop(function(_ENV)
     namespace "NgxLua"
@@ -56,6 +56,33 @@ PLoop(function(_ENV)
 	        --- the authentication for the redis server
 	        member "auth" 		{ type = String }
 	    end)
+
+        __Arguments__{ NEString } __Abstract__{ Inheritable = true }
+        class "RedisScript" (function(_ENV, script)
+            local _Script       = script
+            local _Sha1
+
+            __Static__()
+            function Run(redis, ...)
+                local res, err
+
+                if not _Sha1 then
+                    -- Init
+                    res, err    = redis:Execute("script", "load", _Script)
+                    if err then return res, err end
+                    _Sha1       = res
+                end
+
+                res, err        = redis:Execute("evalsha", _Sha1, ...)
+
+                if err and err:match("NOSCRIPT") then
+                    -- Should load the script
+                    res, err    = redis:Execute("EVAL", _Script, ...)
+                end
+
+                return res, err
+            end
+        end)
 
         -----------------------------------------------------------
         --                       property                        --
@@ -195,6 +222,34 @@ PLoop(function(_ENV)
                 if err then error("Redis:Execute(command, ...) - " .. err, 2) end
                 return parseValue(res)
             end
+        end
+
+        __Arguments__{ NEString, Any * 0 }
+        function SafeExecute(self, command, ...)
+            local cmd = self[1][strlower(command)]
+            if cmd then
+                local res, err = cmd(self[1], ...)
+                if err then return res, err end
+                return parseValue(res)
+            end
+        end
+
+        __Arguments__{ -RedisScript, NaturalNumber, Any * 0 }
+        function RunScript(self, script, numkeys, ...)
+            local res, err = script.Run(self, numkeys, ...)
+            if err then error("Redis:RunScript(script, ...) - " .. err, 2) end
+            return parseValue(res)
+        end
+
+        __Arguments__{ -RedisScript, NaturalNumber, Any * 0 }
+        function SafeRunScript(self, script, numkeys, ...)
+            local res, err = script.Run(self, numkeys, ...)
+            if err then return res, err end
+            return parseValue(res)
+        end
+
+        function FlushScript(self)
+            self:SafeExecute("script", "flush")
         end
 
         -----------------------------------------------------------
