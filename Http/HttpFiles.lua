@@ -8,8 +8,8 @@
 -- Author       :   kurapica125@outlook.com                                  --
 -- URL          :   http://github.com/kurapica/PLoop                         --
 -- Create Date  :   2016/04/24                                               --
--- Update Date  :   2018/04/03                                               --
--- Version      :   1.0.0                                                    --
+-- Update Date  :   2019/07/24                                               --
+-- Version      :   1.0.1                                                    --
 --===========================================================================--
 
 PLoop(function(_ENV)
@@ -158,6 +158,8 @@ PLoop(function(_ENV)
                         end
                     end
                 end)
+
+                if failmsg and self:Delete() end
 
                 return finished, failmsg
             end
