@@ -44,6 +44,8 @@ PLoop(function(_ENV)
             end
         }
 
+        property "Headers"      { set = false, default = function() return ngx.req.get_headers() end }
+
         property "Form"         { set = false, default = function() ngx.req.read_body() return ngx.req.get_post_args() or {} end }
 
         property "HttpMethod"   { set = false, default = function() return HttpMethod[ngx.var.request_method] end }

@@ -159,7 +159,7 @@ PLoop(function(_ENV)
                     end
                 end)
 
-                if failmsg and self:Delete() end
+                if failmsg then self:Delete() end
 
                 return finished, failmsg
             end
