@@ -8,8 +8,8 @@
 -- Author       :   kurapica125@outlook.com                                  --
 -- URL          :   http://github.com/kurapica/PLoop                         --
 -- Create Date  :   2018/09/07                                               --
--- Update Date  :   2019/06/06                                               --
--- Version      :   1.1.0                                                    --
+-- Update Date  :   2019/07/27                                               --
+-- Version      :   1.2.0                                                    --
 --===========================================================================--
 PLoop(function(_ENV)
     namespace "NgxLua"
@@ -36,6 +36,7 @@ PLoop(function(_ENV)
             deserialize         = Serialization.Deserialize,
 
             stringProvider      = Serialization.StringFormatProvider{ ObjectTypeIgnored = false, Indent = false, LineBreak = "" },
+            stringProviderNoType= Serialization.StringFormatProvider{ ObjectTypeIgnored = true,  Indent = false, LineBreak = "" },
 
             Date, System.Data.ConnectionState
         }
@@ -150,18 +151,18 @@ PLoop(function(_ENV)
         end
 
         --- Try sets the the value with non-exist key to the cache, return true if success
-        __Arguments__{ NEString, Any, Date }
-        function TrySet(self, key, value, expiretime)
-            if 1 == self:Execute("setnx", key, serialize(stringProvider, value)) then
+        __Arguments__{ NEString, Any, Date, Boolean/nil }
+        function TrySet(self, key, value, expiretime, notype)
+            if 1 == self:Execute("setnx", key, serialize(notype and stringProviderNoType or stringProvider, value)) then
                 self:Execute("expireat", key, expiretime.Time)
                 return true
             end
             return false
         end
 
-        __Arguments__{ NEString, Any, NaturalNumber/nil }
-        function TrySet(self, key, value, expiretime)
-            if 1 == self:Execute("setnx", key, serialize(stringProvider, value)) then
+        __Arguments__{ NEString, Any, NaturalNumber/nil, Boolean/nil }
+        function TrySet(self, key, value, expiretime, notype)
+            if 1 == self:Execute("setnx", key, serialize(notype and stringProviderNoType or stringProvider, value)) then
                 if expiretime then self:Execute("expire", key, expiretime) end
                 return true
             end
@@ -169,15 +170,15 @@ PLoop(function(_ENV)
         end
 
 		--- Set key-value pair to the cache
-        __Arguments__{ NEString, Any, Date }
-        function Set(self, key, value, expiretime)
-            self:Execute("set", key, serialize(stringProvider, value))
+        __Arguments__{ NEString, Any, Date, Boolean/nil }
+        function Set(self, key, value, expiretime, notype)
+            self:Execute("set", key, serialize(notype and stringProviderNoType or stringProvider, value))
             self:Execute("expireat", key, expiretime.Time)
         end
 
-        __Arguments__{ NEString, Any, NaturalNumber/nil }
-        function Set(self, key, value, expiretime)
-            self:Execute("set", key, serialize(stringProvider, value))
+        __Arguments__{ NEString, Any, NaturalNumber/nil, Boolean/nil }
+        function Set(self, key, value, expiretime, notype)
+            self:Execute("set", key, serialize(notype and stringProviderNoType or stringProvider, value))
             if expiretime then
                 self:Execute("expire", key, expiretime)
             end
@@ -195,10 +196,10 @@ PLoop(function(_ENV)
         end
 
         --- Get value for a key
-        __Arguments__{ NEString }
-        function Get(self, key)
+        __Arguments__{ NEString, AnyType/nil }
+        function Get(self, key, type)
             local value = self:Execute("get", key)
-            if value then return deserialize(stringProvider, value) end
+            if value then return deserialize(stringProvider, value, type) end
         end
 
         --- Whether the key existed in the cache
