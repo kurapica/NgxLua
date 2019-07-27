@@ -25,6 +25,8 @@ require "NgxLua.Http.HttpResponse"
 require "NgxLua.Http.HttpContext"
 require "NgxLua.Http.ShareSessionStorageProvider"
 require "NgxLua.Http.RedisSessionStorageProvider"
+require "NgxLua.Http.JWTSessionProvider"
+
 require "NgxLua.Thread.LockManager"
 
 import "NgxLua"
