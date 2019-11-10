@@ -17,7 +17,7 @@ PLoop(function(_ENV)
     __Sealed__() class "NgxLua.JWTSessionIDManager" (function (_ENV)
         extend "ISessionIDManager"
 
-        export{ "type", "tonumber", Date, HttpCookie.SameSiteValue }
+        export{ "type", "tonumber", Date, HttpCookie.SameSiteValue, System.Web.HttpSession }
 
         local jwt               = require "resty.jwt"
 
@@ -54,7 +54,9 @@ PLoop(function(_ENV)
                 local jwtObj    = jwt:verify(self.SecretKey, token)
                 if type(jwtObj) == "table" and jwtObj.verified then
                     local time  = jwtObj.payload[self.TimeoutField]
-                    if (tonumber(time) or 0) <= Date.Now.Time then return nil end
+                    if (tonumber(time) or 0) <= Date.Now.Time and not jwtObj.payload[HttpSession.TemporaryField] then
+                        return nil
+                    end
                     jwtObj.context = context
                     return jwtObj
                 end
@@ -77,9 +79,9 @@ PLoop(function(_ENV)
         function SaveSessionID(self, context, session)
             local cookie        = context.Response.Cookies[self.CookieName]
             local items         = session.RawItems
-            local timeout       = session.Timeout or Date.Now:AddMinutes(self.TimeoutMinutes)
+            local timeout       = not session.IsTemporary and (session.Timeout or Date.Now:AddMinutes(self.TimeoutMinutes)) or nil
 
-            items[self.TimeoutField] = timeout.Time
+            items[self.TimeoutField] = timeout and timeout.Time
 
             cookie.Value        = jwt:sign(self.SecretKey, {
                 header          = { typ = "JWT", alg = self.HashAlgorithm },
