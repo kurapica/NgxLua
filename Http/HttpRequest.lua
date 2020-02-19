@@ -26,8 +26,8 @@ PLoop(function(_ENV)
         -----------------------------------------------------------
         --                       property                        --
         -----------------------------------------------------------
-        property "ContentLength"{ set = false, default = function() return ngx.var.content_length end }
-        property "ContentType"  { set = false, default = function() return ngx.var.content_type end }
+        property "Headers"      { set = false, default = function() return ngx.req.get_headers() end }
+
         property "Cookies"      { set = false, default = function()
                 local cookies   = {}
                 local _cookie   = ngx.var.http_cookie
@@ -43,8 +43,6 @@ PLoop(function(_ENV)
                 return cookies
             end
         }
-
-        property "Headers"      { set = false, default = function() return ngx.req.get_headers() end }
 
         property "Form"         { set = false, default = function() ngx.req.read_body() return ngx.req.get_post_args() or {} end }
 
