@@ -23,7 +23,8 @@ PLoop(function(_ENV)
         -----------------------------------------------------------
         --                       property                        --
         -----------------------------------------------------------
-        property "ContentType"      { type = String, handler = function (self, value) ngx.header.content_type = value end }
+        __Indexer__(String)
+        property "Header"           { set = function(self, key, value) ngx.header[key] = value end }
 
         property "Write"            { set = false , default = function (self)
                 local cache     = {}
