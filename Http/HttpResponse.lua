@@ -8,8 +8,8 @@
 -- Author       :   kurapica125@outlook.com                                  --
 -- URL          :   http://github.com/kurapica/PLoop                         --
 -- Create Date  :   2015/10/22                                              --
--- Update Date  :   2018/04/03                                               --
--- Version      :   1.0.0                                                    --
+-- Update Date  :   2020/03/20                                               --
+-- Version      :   1.1.0                                                    --
 --===========================================================================--
 
 PLoop(function(_ENV)
@@ -68,10 +68,6 @@ PLoop(function(_ENV)
         function Close(self)
             if self._Cache and self._Cache[1] then ngx.print(self._Cache) ngx.flush() end
             return ngx.eof()
-        end
-
-        function ServerRedirect(self)
-            return ngx.redirect(self.RedirectLocation, self.StatusCode)
         end
     end)
 end)
