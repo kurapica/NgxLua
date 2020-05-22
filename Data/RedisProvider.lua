@@ -56,9 +56,9 @@ PLoop(function(_ENV)
         local autoGenParseValues= {}
         local autoGenFromValues = {}
 
-        local function parseValue(value, type)
+        local function parseValue(value, vtype)
             value               = parseNilValue(value)
-            return type(value) == "string" and deserialize(stringProvider, value, type) or value
+            return type(value) == "string" and deserialize(stringProvider, value, vtype) or value
         end
 
         local function fromValue(value)
