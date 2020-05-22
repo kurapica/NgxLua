@@ -303,7 +303,7 @@ PLoop(function(_ENV)
             if cmd then
                 local res, err  = cmd(self[1], ...)
                 if err then error("Redis:Execute(command, ...) - " .. err, 2) end
-                return parseValue(res)
+                return parseNilValue(res)
             end
         end
 
@@ -314,7 +314,7 @@ PLoop(function(_ENV)
             if cmd then
                 local res, err  = cmd(self[1], ...)
                 if err then return res, err end
-                return parseValue(res)
+                return parseNilValue(res)
             end
         end
 
@@ -323,7 +323,7 @@ PLoop(function(_ENV)
         function RunScript(self, script, numkeys, ...)
             local res, err      = script.Run(self, numkeys, ...)
             if err then error("Redis:RunScript(script, ...) - " .. err, 2) end
-            return parseValue(res)
+            return parseNilValue(res)
         end
 
         --- Safe process a redis script
@@ -331,7 +331,7 @@ PLoop(function(_ENV)
         function SafeRunScript(self, script, numkeys, ...)
             local res, err      = script.Run(self, numkeys, ...)
             if err then return res, err end
-            return parseValue(res)
+            return parseNilValue(res)
         end
 
         --- Flush the script in the redis
