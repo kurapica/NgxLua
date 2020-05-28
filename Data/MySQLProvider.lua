@@ -286,7 +286,7 @@ PLoop(function(_ENV)
         function ToSql(self)
             local temp          = {}
 
-            local sqltype       = self[FIELD_SQLTYPE]
+            local sqltype       = self[FIELD_SQLTYPE] or SQLTYPE_SELECT
             local index         = 1
 
             if not sqltype then return end
