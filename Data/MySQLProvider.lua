@@ -140,10 +140,10 @@ PLoop(function(_ENV)
             if type(fields) == "table" then
                 fields          = tblconcat(fields, ",")
             else
-                fields          = tostring(fields)
+                fields          = type(fields) == "string" and fields or nil
             end
 
-            self[FIELD_SELECT]  = fields ~= "" and fields or nil
+            self[FIELD_SELECT]  = fields and fields ~= "" and fields or nil
 
             return self
         end
