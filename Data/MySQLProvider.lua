@@ -452,6 +452,9 @@ PLoop(function(_ENV)
             parseindex          = Toolset.parseindex,
             parseSql            = parseSql,
             error               = error,
+            pairs               = pairs,
+            type                = type,
+            tonumber            = tonumber,
 
             MySQLTransaction,
         }
@@ -524,7 +527,7 @@ PLoop(function(_ENV)
 
         --- Sends the query sql to the remote MySQL server
         function Query(self, sql, ...)
-            sql = parseSql(sql, ...)
+            sql                 = parseSql(sql, ...)
 
             if self.State == State_Closed then
                 error("Usage: MySQLConnection:Query(sql) - not connected", 2)
@@ -532,7 +535,7 @@ PLoop(function(_ENV)
                 error("Usage: MySQLConnection:Query(sql) - an operation is still processing", 2)
             end
 
-            self.State = State_Executing
+            self.State          = State_Executing
 
             Trace("[SQL][Query]%q", sql)
 
@@ -542,7 +545,7 @@ PLoop(function(_ENV)
                 error("Usage: MySQLConnection:Query(sql) - " .. (err or "failed"), 2)
             end
 
-            self.State = State_Fetching
+            self.State          = State_Fetching
 
             local res, err, errcode, sqlstate = self[0]:read_result()
             if not res then
@@ -566,9 +569,26 @@ PLoop(function(_ENV)
                 end
             end
 
-            self.State = State_Open
+            self.State          = State_Open
 
             return res
+        end
+
+        --- Sends the query sql and return the row count
+        function Count(self, sql, ...)
+            local res           = self:Query(sql, ...)
+
+            if res then
+                res             = res[1]
+
+                if type(res) == "table" then
+                    for k, v in pairs(res) do
+                        return tonumber(v) or 0
+                    end
+                end
+            end
+
+            return 0
         end
 
         --- Sends the insert sql to the remote MySQL server
