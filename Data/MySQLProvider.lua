@@ -8,8 +8,8 @@
 -- Author       :   kurapica125@outlook.com                                  --
 -- URL          :   http://github.com/kurapica/PLoop                         --
 -- Create Date  :   2018/06/07                                               --
--- Update Date  :   2019/05/17                                               --
--- Version      :   1.1.0                                                    --
+-- Update Date  :   2020/06/01                                               --
+-- Version      :   1.2.1                                                    --
 --===========================================================================--
 PLoop(function(_ENV)
     namespace "NgxLua.MySQL"
@@ -145,6 +145,12 @@ PLoop(function(_ENV)
 
             self[FIELD_SELECT]  = fields and fields ~= "" and fields or nil
 
+            return self
+        end
+
+        function Count(self)
+            self[FIELD_SQLTYPE] = SQLTYPE_SELECT
+            self[FIELD_SELECT]  = "COUNT(*)"
             return self
         end
 
