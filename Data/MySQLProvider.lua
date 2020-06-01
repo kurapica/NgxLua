@@ -223,7 +223,6 @@ PLoop(function(_ENV)
 
         function Delete(self)
             self[FIELD_SQLTYPE] = SQLTYPE_DELETE
-
             return self
         end
 
@@ -283,10 +282,12 @@ PLoop(function(_ENV)
 
         function Limit(self, limit)
             self[FIELD_LIMIT]   = limit
+            return self
         end
 
         function Offset(self, offset)
             self[FIELD_OFFSET]  = offset
+            return self
         end
 
         function ToSql(self)
