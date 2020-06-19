@@ -20,7 +20,7 @@ PLoop(function(_ENV)
         export {
             ngx                 = _G.ngx,
 
-            ShareDict,
+            NgxLua.ShareDict,
         }
 
         -----------------------------------------------------------------------
