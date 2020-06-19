@@ -8,8 +8,8 @@
 -- Author       :   kurapica125@outlook.com                                  --
 -- URL          :   http://github.com/kurapica/PLoop                         --
 -- Create Date  :   2018/09/07                                               --
--- Update Date  :   2020/05/20                                               --
--- Version      :   2.0.0                                                    --
+-- Update Date  :   2020/06/04                                               --
+-- Version      :   2.0.1                                                    --
 --===========================================================================--
 PLoop(function(_ENV)
     namespace "NgxLua"
