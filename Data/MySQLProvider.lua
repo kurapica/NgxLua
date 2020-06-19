@@ -8,8 +8,8 @@
 -- Author       :   kurapica125@outlook.com                                  --
 -- URL          :   http://github.com/kurapica/PLoop                         --
 -- Create Date  :   2018/06/07                                               --
--- Update Date  :   2020/06/01                                               --
--- Version      :   1.2.1                                                    --
+-- Update Date  :   2020/06/18                                               --
+-- Version      :   1.2.2                                                    --
 --===========================================================================--
 PLoop(function(_ENV)
     namespace "NgxLua.MySQL"
@@ -491,10 +491,10 @@ PLoop(function(_ENV)
         end
 
         --- Closes the connection to the database.
-        function Close(self)
+        function Close(self, errmsg)
             if self.State == State_Closed then return end
 
-            if self.KeepAlive then
+            if errmsg == nil and self.KeepAlive then
                 local ok, err = self[0]:set_keepalive(self.MaxIdleTime, self.PoolSize)
                 if not ok then error("Usage: MySQLConnection:Close() - " .. (err or "failed"), 2) end
             else
