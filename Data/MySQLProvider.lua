@@ -8,8 +8,8 @@
 -- Author       :   kurapica125@outlook.com                                  --
 -- URL          :   http://github.com/kurapica/PLoop                         --
 -- Create Date  :   2018/06/07                                               --
--- Update Date  :   2020/06/18                                               --
--- Version      :   1.2.2                                                    --
+-- Update Date  :   2020/07/24                                               --
+-- Version      :   1.2.3                                                    --
 --===========================================================================--
 PLoop(function(_ENV)
     namespace "NgxLua.MySQL"
@@ -121,6 +121,7 @@ PLoop(function(_ENV)
             FIELD_LOCK          = 8,
             FIELD_LIMIT         = 9,
             FIELD_OFFSET        = 10,
+            FIELD_ALLROW        = 11,
 
             escape              = escape,
             parseSql            = parseSql,
@@ -221,9 +222,19 @@ PLoop(function(_ENV)
             return self
         end
 
+        function UpdateAll(self, map)
+            self:Update(map)
+            self[FIELD_ALLROW]  = true
+        end
+
         function Delete(self)
             self[FIELD_SQLTYPE] = SQLTYPE_DELETE
             return self
+        end
+
+        function DeleteAll(self)
+            self:Delete()
+            self[FIELD_ALLROW]  = true
         end
 
         function From(self, name)
@@ -342,8 +353,8 @@ PLoop(function(_ENV)
                 if self[FIELD_WHERE] then
                     temp[index] = "WHERE";                      index = index + 1
                     temp[index] = self[FIELD_WHERE];            index = index + 1
-                else
-                    return
+                elseif not self[FIELD_ALLROW] then
+                    error("Usage: MySQLBuilder should use UpdateAll to delete all rows, otherwise need set the Where condition")
                 end
             elseif sqltype == SQLTYPE_DELETE then
                 temp[index]     = "DELETE FROM";                index = index + 1
@@ -354,8 +365,8 @@ PLoop(function(_ENV)
                 if self[FIELD_WHERE] then
                     temp[index] = "WHERE";                      index = index + 1
                     temp[index] = self[FIELD_WHERE];            index = index + 1
-                else
-                    return
+                elseif not self[FIELD_ALLROW] then
+                    error("Usage: MySQLBuilder should use DeleteAll to delete all rows, otherwise need set the Where condition")
                 end
             elseif sqltype == SQLTYPE_INSERT then
                 temp[index]     = "INSERT INTO";                index = index + 1
