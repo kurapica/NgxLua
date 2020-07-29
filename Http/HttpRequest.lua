@@ -7,14 +7,16 @@
 --===========================================================================--
 -- Author       :   kurapica125@outlook.com                                  --
 -- URL          :   http://github.com/kurapica/PLoop                         --
--- Create Date  :   2015/10/22                                              --
--- Update Date  :   2019/04/22                                               --
--- Version      :   1.0.1                                                    --
+-- Create Date  :   2015/10/22                                               --
+-- Update Date  :   2020/07/29                                               --
+-- Version      :   1.1.0                                                    --
 --===========================================================================--
 
 PLoop(function(_ENV)
     __Sealed__() class "NgxLua.HttpRequest" (function (_ENV)
         inherit (System.Web.HttpRequest)
+
+        import "System.IO"
 
         export {
             ngx                 = _G.ngx,
@@ -59,5 +61,23 @@ PLoop(function(_ENV)
         property "Url"          { set = false, default = function(self) return self.Context.Application:Url2Path(ngx.var.uri) end }
 
         property "Files"        { set = false, default = function(self) return HttpFiles() end }
+
+        property "Body"         { set = false, default = function(self)
+                                        ngx.req.read_body()
+                                        local data     = ngx.req.get_body_data()
+
+                                        if data == nil then
+                                            local file = ngx.req.get_body_file()
+
+                                            if file then
+                                                file   = FileReader(file, "rb")
+                                                return with(file)(function(reader) reader:ReadToEnd() end)
+                                            end
+                                        end
+
+                                        -- Block the next retrieve
+                                        return ""
+                                    end
+                                }
     end)
 end)
