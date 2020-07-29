@@ -225,6 +225,7 @@ PLoop(function(_ENV)
         function UpdateAll(self, map)
             self:Update(map)
             self[FIELD_ALLROW]  = true
+            return self
         end
 
         function Delete(self)
@@ -235,6 +236,7 @@ PLoop(function(_ENV)
         function DeleteAll(self)
             self:Delete()
             self[FIELD_ALLROW]  = true
+            return self
         end
 
         function From(self, name)
