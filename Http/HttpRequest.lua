@@ -20,7 +20,9 @@ PLoop(function(_ENV)
 
         export {
             ngx                 = _G.ngx,
+            pcall               = pcall,
             strtrim             = Toolset.trim,
+            ParseJson           = System.Web.ParseJson,
 
             HttpMethod, NgxLua.HttpFiles
         }
@@ -46,7 +48,20 @@ PLoop(function(_ENV)
             end
         }
 
-        property "Form"         { set = false, default = function() ngx.req.read_body() return ngx.req.get_post_args() or {} end }
+        property "Form"         { set = false, default = function(self)
+                local ctype     = self.ContentType or "application/x-www-form-urlencoded"
+                if ctype:match("application/json") then
+                    local body  = self.Body
+                    local ok, rs= pcall(ParseJson, body)
+                    return ok and rs or {}
+                elseif ctype:match("application/x-www-form-urlencoded") then
+                    ngx.req.read_body()
+                    return ngx.req.get_post_args() or {}
+                end
+
+                return {}
+            end
+        }
 
         property "HttpMethod"   { set = false, default = function() return HttpMethod[ngx.var.request_method] end }
 
