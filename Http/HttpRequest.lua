@@ -50,11 +50,11 @@ PLoop(function(_ENV)
 
         property "Form"         { set = false, default = function(self)
                 local ctype     = self.ContentType or "application/x-www-form-urlencoded"
-                if ctype:match("application/json") then
+                if ctype:find("application/json", 1, true) then
                     local body  = self.Body
                     local ok, rs= pcall(ParseJson, body)
                     return ok and rs or {}
-                elseif ctype:match("application/x-www-form-urlencoded") then
+                elseif ctype:find("application/x-www-form-urlencoded", 1, true) then
                     ngx.req.read_body()
                     return ngx.req.get_post_args() or {}
                 end
