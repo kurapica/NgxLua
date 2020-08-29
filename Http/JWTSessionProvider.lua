@@ -15,7 +15,7 @@
 
 PLoop(function(_ENV)
     __Sealed__() class "NgxLua.JWTSessionIDManager" (function (_ENV)
-        extend "ISessionIDManager"
+        extend "System.Web.ISessionIDManager"
 
         export{ "type", "tonumber", Date, HttpCookie.SameSiteValue, System.Web.HttpSession }
 
@@ -96,7 +96,7 @@ PLoop(function(_ENV)
 
     --- Represents the interface of sessio1n storage provider
     __Sealed__() class "NgxLua.JWTSessionStorageProvider" (function (_ENV)
-        extend "ISessionStorageProvider"
+        extend "System.Web.ISessionStorageProvider"
 
         -----------------------------------------------------------------------
         --                              method                               --

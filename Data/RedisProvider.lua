@@ -12,9 +12,8 @@
 -- Version      :   2.0.1                                                    --
 --===========================================================================--
 PLoop(function(_ENV)
-    namespace "NgxLua"
-
-    __Sealed__() class "Redis" (function(_ENV)
+    --- The Redis implementation
+    __Sealed__() class "NgxLua.Redis" (function(_ENV)
         extend "System.Data.ICache"
         extend "System.Data.IHashCache"
         extend "System.Data.IListCache"
@@ -725,5 +724,23 @@ PLoop(function(_ENV)
             if not cache then throw(err) end
             return { cache, opt or ConnectionOption() }, true
         end
+    end)
+
+    --- A session storage provider based on the ngx.shared.DICT
+    __Sealed__() class "System.Context.RedisSessionStorageProvider" (function (_ENV)
+        extend "System.Context.ICacheSessionStorageProvider"
+
+        export { NgxLua.Redis }
+
+        -----------------------------------------------------------------------
+        --                          inherit method                           --
+        -----------------------------------------------------------------------
+        function GetCacheObject(self) return Redis(self.ConnectionOption) end
+
+        -----------------------------------------------------------------------
+        --                             property                              --
+        -----------------------------------------------------------------------
+        --- the redis connection option
+        property "ConnectionOption" { type = Redis.ConnectionOption }
     end)
 end)

@@ -12,9 +12,7 @@
 -- Version      :   1.0.0                                                    --
 --===========================================================================--
 PLoop(function(_ENV)
-    namespace "NgxLua"
-
-    __Sealed__() class "ShareDict" (function(_ENV)
+    __Sealed__() class "NgxLua.ShareDict" (function(_ENV)
         extend "System.Data.ICache"
 
         export {
@@ -82,5 +80,26 @@ PLoop(function(_ENV)
 
         __Arguments__{ Table }
         function __new(self, storage) return { storage }, true end
+    end)
+
+        --- A session storage provider based on the ngx.shared.DICT
+    __Sealed__() class "System.Context.ShareSessionStorageProvider" (function (_ENV)
+        extend "System.Context.ICacheSessionStorageProvider"
+
+        export { NgxLua.ShareDict, type }
+
+        -----------------------------------------------------------------------
+        --                          inherit method                           --
+        -----------------------------------------------------------------------
+        function GetCacheObject(self) return self.Cache end
+
+        -----------------------------------------------------------------------
+        --                             property                              --
+        -----------------------------------------------------------------------
+        --- the share dictionary
+        property "Storage"      { type = Table + String, handler = function(self, str) if type(str) == "string" then self.Storage = ngx.shared[str] or error("The " .. str .. " shared table not existed") end end}
+
+        --- The cache object can be shared
+        property "Cache"        { set = false, default = function(self) return ShareDict(self.Storage) end }
     end)
 end)
