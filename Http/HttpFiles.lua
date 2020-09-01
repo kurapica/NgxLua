@@ -8,8 +8,8 @@
 -- Author       :   kurapica125@outlook.com                                  --
 -- URL          :   http://github.com/kurapica/PLoop                         --
 -- Create Date  :   2016/04/24                                               --
--- Update Date  :   2019/07/24                                               --
--- Version      :   1.0.1                                                    --
+-- Update Date  :   2020/09/01                                               --
+-- Version      :   1.0.2                                                    --
 --===========================================================================--
 
 PLoop(function(_ENV)
@@ -199,7 +199,7 @@ PLoop(function(_ENV)
         --                       method                        --
         -----------------------------------------------------------
         __Iterator__()
-        function GetIterator(self)
+        function GetIterator(self, rform)
             local form, err     = RestyUpload:new(self.ChunkSize)
             if not form then return end
 
@@ -209,6 +209,7 @@ PLoop(function(_ENV)
             local maxsize       = context.Application[MAX_SIZE] or HttpFiles.MaxSize
 
             local name, file, temp
+            local nform         = type(rform) ~= "table" and {} or nil
             while true do
                 local typ, res, err = form:read()
                 if not typ or typ == "eof" then break end
@@ -242,12 +243,20 @@ PLoop(function(_ENV)
                             temp = tblconat(temp, "")
                         end
 
-                        context.Request.Form[name] = temp
+                        if nform then
+                            nform[name] = temp
+                        else
+                            rform[name] = temp
+                        end
                     end
                     name        = nil
                     file        = nil
                     temp        = nil
                 end
+            end
+
+            if nform then
+                context.Request.Form = nform
             end
         end
 

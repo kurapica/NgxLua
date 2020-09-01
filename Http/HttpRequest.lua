@@ -8,8 +8,8 @@
 -- Author       :   kurapica125@outlook.com                                  --
 -- URL          :   http://github.com/kurapica/PLoop                         --
 -- Create Date  :   2015/10/22                                               --
--- Update Date  :   2020/08/06                                               --
--- Version      :   1.1.1                                                    --
+-- Update Date  :   2020/09/01                                               --
+-- Version      :   1.1.2                                                    --
 --===========================================================================--
 
 PLoop(function(_ENV)
@@ -48,12 +48,22 @@ PLoop(function(_ENV)
             end
         }
 
-        property "Form"         { set = false, default = function(self)
+        property "Form"         { default = function(self)
                 local ctype     = self.ContentType
                 if ctype and ctype:find("application/json", 1, true) then
                     local body  = self.Body
                     local ok, rs= pcall(ParseJson, body)
                     return ok and rs or {}
+                elseif ctype and ctype:find("multipart/form-data", 1, true) then
+                    -- Normally the data should be handled by the HttpFiles,
+                    -- Since the code access the Form first, all files will be skipped
+                    local form  = {}
+
+                    for name, file in self.Files:GetIterator(form) do
+                        file:Skip()
+                    end
+
+                    return form
                 else
                     ngx.req.read_body()
                     return ngx.req.get_post_args() or {}
