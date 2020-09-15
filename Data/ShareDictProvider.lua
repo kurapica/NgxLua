@@ -91,7 +91,7 @@ PLoop(function(_ENV)
         -----------------------------------------------------------------------
         --                          inherit method                           --
         -----------------------------------------------------------------------
-        function GetCacheObject(self) return self.Cache end
+        function GetCache(self) return self.Cache end
 
         -----------------------------------------------------------------------
         --                             property                              --

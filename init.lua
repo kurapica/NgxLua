@@ -28,6 +28,11 @@ require "NgxLua.Http.JWTSessionProvider"
 
 require "NgxLua.Thread.LockManager"
 
+-- NgxLua.Net
+require "NgxLua.Net.Socket"
+require "NgxLua.Net.MQTT.MessagePublisher"
+require "NgxLua.Net.MQTT.Client"
+
 import "NgxLua"
 
 PLoop(function(_ENV)

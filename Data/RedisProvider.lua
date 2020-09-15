@@ -20,6 +20,8 @@ PLoop(function(_ENV)
         extend "System.Data.ISetCache"
         extend "System.Data.ISortSetCache"
 
+        extend "System.Message.IPublisher"
+
         local redis 			= require "resty.redis"
 
         export {
@@ -35,6 +37,8 @@ PLoop(function(_ENV)
             select              = select,
             error               = error,
             ipairs              = ipairs,
+            rawget              = rawget,
+            tonumber            = tonumber,
             max                 = math.max,
             min                 = math.min,
             unpack              = unpack or table.unpack,
@@ -165,8 +169,8 @@ PLoop(function(_ENV)
         --- The connection pool size
         property "PoolSize" 	{ field = 6, type = NaturalNumber, default = 50 }
 
-        --- The timeout protection for operations(ms)
-        property "TimeOut"      { field = 7, type = NaturalNumber, default = 1000, handler = function(self, val) self[1]:set_timeout(val or 1000) end }
+        --- The timeout protection for operations
+        property "Timeout"      { field = 7, type = Number, default = 1, handler = function(self, val) self[1]:set_timeout((val or 1) * 1000) end }
 
         -----------------------------------------------------------
         --                    method - ICache                    --
@@ -209,7 +213,7 @@ PLoop(function(_ENV)
 
             self.State = State_Open
 
-            self[1]:set_timeout(self.TimeOut)
+            self[1]:set_timeout(self.Timeout * 1000)
         end
 
         --- Try sets the the value with non-exist key to the cache, return true if success
@@ -301,7 +305,10 @@ PLoop(function(_ENV)
             local cmd           = self[1][strlower(command)]
             if cmd then
                 local res, err  = cmd(self[1], ...)
-                if err then error("Redis:Execute(command, ...) - " .. err, 2) end
+                if err then
+                    if err == "timeout" and rawget(self[1], "_subscribed") then return nil, err end
+                    error("Redis:Execute(command, ...) - " .. err, 2)
+                end
                 return parseNilValue(res)
             end
         end
@@ -392,6 +399,34 @@ PLoop(function(_ENV)
                     yield(result[i], parseValue(result[i + 1], type))
                 end
             end
+        end
+
+        --- Return an iterator over to scan all hash pairs with pattern settings
+        __Arguments__{ NEString, NEString/nil, AnyType/nil } __Iterator__()
+        function HScanAll(self, hash, pattern, vtype)
+            local result
+            local cursor        = 0
+
+            repeat
+                if pattern then
+                    result      = self:Execute("hscan", hash, cursor, "match", pattern)
+                else
+                    result      = self:Execute("hscan", hash, cursor)
+                end
+
+                if result and result[1] then
+                    cursor      = tonumber(result[1]) or 0
+                    result      = result[2]
+
+                    if result and type(result) == "table" then
+                        for i = 1, #result, 2 do
+                            yield(result[i], parseValue(result[i + 1], vtype))
+                        end
+                    end
+                else
+                    break
+                end
+            until cursor == 0
         end
 
         --- Gets the hash element count
@@ -716,6 +751,51 @@ PLoop(function(_ENV)
         end
 
         -----------------------------------------------------------
+        --                   Message Publisher                   --
+        -----------------------------------------------------------
+        --- Subscribe a message filter, topic-based, return true if successful, otherwise false and error code is needed
+        __Arguments__{ NEString }
+        function SubscribeTopic(self, filter)
+            local result
+
+            if filter:find("*", 1, true) then
+                result          = self:Execute("psubscribe", filter)
+            else
+                result          = self:Execute("subscribe", filter)
+            end
+
+            return result and true or false
+        end
+
+        --- Unsubscribe a message filter, topic-based, return true if successful, otherwise false and error code is needed
+        __Arguments__{ NEString/nil }
+        function UnsubscribeTopic(self, filter)
+            local result
+
+            if filter and filter:find("*", 1, true) then
+                result          = self:Execute("punsubscribe", filter)
+            else
+                result          = self:Execute("unsubscribe", filter)
+            end
+
+            return result and true or false
+        end
+
+        --- Publish the msssage, it'd give a topic if it's topic-based message
+        __Arguments__{ NEString, NEString }
+        function PublishMessage(self, topic, message)
+            return self:Execute("publish", topic, message) == 1
+        end
+
+        --- Receive and return the published message
+        function ReceiveMessage(self)
+            local result        = self:Execute("read_reply")
+            if result and result[1] == "message" then
+                return result[2], result[3]
+            end
+        end
+
+        -----------------------------------------------------------
         --                      constructor                      --
         -----------------------------------------------------------
         __Arguments__{ ConnectionOption/nil }
@@ -735,7 +815,7 @@ PLoop(function(_ENV)
         -----------------------------------------------------------------------
         --                          inherit method                           --
         -----------------------------------------------------------------------
-        function GetCacheObject(self) return Redis(self.ConnectionOption) end
+        function GetCache(self) return Redis(self.ConnectionOption) end
 
         -----------------------------------------------------------------------
         --                             property                              --
