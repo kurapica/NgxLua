@@ -26,6 +26,7 @@ PLoop(function(_ENV)
             tonumber            = tonumber,
             yield               = coroutine.yield,
             strtrim             = Toolset.trim,
+            with                = with,
         }
 
         local function parseToRedisPattern(pattern)

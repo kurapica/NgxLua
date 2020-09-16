@@ -764,6 +764,8 @@ PLoop(function(_ENV)
                 result          = self:Execute("subscribe", filter)
             end
 
+            if result then self.TopicSubscribed = true end
+
             return result and true or false
         end
 
@@ -778,6 +780,11 @@ PLoop(function(_ENV)
                 result          = self:Execute("unsubscribe", filter)
             end
 
+            local subscribed    = rawget(self[1], "_subscribed")
+            if not subscribed then
+                self.TopicSubscribed = false
+            end
+
             return result and true or false
         end
 
@@ -789,6 +796,12 @@ PLoop(function(_ENV)
 
         --- Receive and return the published message
         function ReceiveMessage(self)
+            local subscribed    = rawget(self[1], "_subscribed")
+            if not subscribed then
+                self.TopicSubscribed = false
+                return
+            end
+
             local result        = self:Execute("read_reply")
             if result and result[1] == "message" then
                 return result[2], result[3]

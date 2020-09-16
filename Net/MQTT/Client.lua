@@ -20,25 +20,29 @@ PLoop(function(_ENV)
 		export {
 			System.Net.MQTT.ClientState, System.Net.MQTT.PacketType, NgxLua.Net.Socket, NgxLua.Net.MQTT.RedisMQTTPublisher,
 
+			with                = with,
 			th_spawn 			= ngx.thread.spawn,
 			th_wait             = ngx.thread.wait,
 			th_kill             = ngx.thread.kill,
 			yield               = coroutine.yield,
 			status 				= coroutine.status,
+			req_socket 			= ngx.req.socket,
+
+			Debug               = Logger.Default[Logger.LogLevel.Debug]
 		}
 
 		-- Process the message publisher
 		local function processMessagePublisher(self)
-			with(self.MessagePublisher)(function(publisher)
-	            while self.State ~= ClientState.CLOSED do
-	                -- Check the published message
-	                local topic, message, qos = publisher:ReceiveMessage()
+			local publisher     = self.MessagePublisher
 
-	                if topic and message then
-	                    self:Publish(topic, message, qos)
-	                end
-	            end
-			end)
+            while publisher.TopicSubscribed do
+                -- Check the published message
+                local topic, message, qos = publisher:ReceiveMessage()
+
+                if topic and message then
+                    self:Publish(topic, message, qos)
+                end
+            end
 		end
 
 		-- Process the client
@@ -71,19 +75,25 @@ PLoop(function(_ENV)
 	    		self.ReceiveTimeout = self.KeepAlive
 	    	end
 
-	    	local thMessage
+	    	with(self)(function()
+		    	local thMessage
 
-	    	if self.IsServerSide and self.MessagePublisher then
-	    		thMessage 		= th_spawn(processMessagePublisher, self)
-	    	end
+		    	if self.IsServerSide and self.MessagePublisher then
+		    		self.MessagePublisher.OnTopicSubscribed = function()
+		    			thMessage 	= th_spawn(processMessagePublisher, self)
+		    		end
+		    	end
 
-	    	-- Start the main processing
-	    	th_wait(processClientPackets(self))
+		    	-- Start the main processing
+		    	processClientPackets(self)
 
-	    	-- kill the message publisher if not dead
-	    	if thMessage and status(thMessage) ~= "dead" then
-	    		th_kill(thMessage)
-	    	end
+		    	-- kill the message publisher if not dead
+		    	if thMessage and status(thMessage) ~= "dead" then
+		    		th_kill(thMessage)
+		    	end
+	    	end, function(err)
+	    		Debug("[Client]%s closed: %s", self.ClientID, err)
+	    	end)
         end
 
 	    -----------------------------------------------------------------------
@@ -93,6 +103,6 @@ PLoop(function(_ENV)
 	    property "IsServerSide"     { type = Boolean, default = true }
 
 	    --- The socket object
-	    property "Socket"           { type = System.Net.ISocket, default = function(self) return Socket(ngx.req.socket(true)) end }
+	    property "Socket"           { type = System.Net.ISocket, default = function(self) return Socket(req_socket(true)) end }
 	end)
 end)

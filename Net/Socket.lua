@@ -35,6 +35,21 @@ PLoop(function(_ENV)
         }
 
         ---------------------------------------------------
+        --                   property                    --
+        ---------------------------------------------------
+        --- Gets or sets a value that specifies the amount of time after which a synchronous Accept call will time out(in seconds)
+        property "AcceptTimeout"     { type = Number, default = 1 }
+
+        --- Gets or sets a value that specifies the amount of time after which a synchronous Receive call will time out(in seconds)
+        property "ReceiveTimeout"    { type = Number, default = 1 }
+
+        --- Gets or sets a value that specifies the amount of time after which a synchronous Send call will time out(in seconds)
+        property "SendTimeout"       { type = Number, default = 1 }
+
+        --- Gets or sets a value that specifies the amount of time after which a synchronous Connect call will time out(in seconds)
+        property "ConnectTimeout"    { type = Number, default = 1 }
+
+        ---------------------------------------------------
         --                    method                     --
         ---------------------------------------------------
         --- Establishes a connection to a remote host
@@ -54,7 +69,7 @@ PLoop(function(_ENV)
 
         --- Closes the Socket connection and releases all associated resources
         function Close(self)
-            self[0]:close()
+            return self[0].close and self[0]:close()
         end
 
         --- Receives data from a bound Socket
@@ -131,7 +146,7 @@ PLoop(function(_ENV)
             self[0]             = tcp
         end
 
-        __Arguments__{ Userdata }
+        __Arguments__{ Userdata + Table }
         function __ctor(self, sock)
             self[0]             = sock
         end
