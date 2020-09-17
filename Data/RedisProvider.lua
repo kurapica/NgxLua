@@ -32,6 +32,7 @@ PLoop(function(_ENV)
             State_Fetching      = System.Data.ConnectionState.Fetching,
 
             Trace               = System.Logger.Default[System.Logger.LogLevel.Trace],
+            Debug               = System.Logger.Default[System.Logger.LogLevel.Debug],
 
             type                = type,
             select              = select,
@@ -53,7 +54,7 @@ PLoop(function(_ENV)
 
             stringProvider      = Serialization.StringFormatProvider{ ObjectTypeIgnored = true,  Indent = false, LineBreak = "" },
 
-            Date, System.Data.ConnectionState, XList
+            Date, System.Data.ConnectionState, XList, Queue, Redis,
         }
 
         local autoGenParseValues= {}
@@ -304,6 +305,8 @@ PLoop(function(_ENV)
         function Execute(self, command, ...)
             local cmd           = self[1][strlower(command)]
             if cmd then
+                Debug("[REDIS]%s %s", command, { ... })
+
                 local res, err  = cmd(self[1], ...)
                 if err then
                     if err == "timeout" and rawget(self[1], "_subscribed") then return nil, err end
@@ -753,9 +756,20 @@ PLoop(function(_ENV)
         -----------------------------------------------------------
         --                   Message Publisher                   --
         -----------------------------------------------------------
+        --- The operation to be delayed when still waiting the receiving messages
+        property "DelayMessageOperations"   { set = false, default = function() return Queue() end }
+
+        --- Whether the redis is still busy in receiving message
+        property "InMessageReading"         { type = Boolean, default = false }
+
         --- Subscribe a message filter, topic-based, return true if successful, otherwise false and error code is needed
         __Arguments__{ NEString }
         function SubscribeTopic(self, filter)
+            if self.InMessageReading then
+                self.DelayMessageOperations:Enqueue("SubscribeTopic", 1, filter)
+                return true
+            end
+
             local result
 
             if filter:find("*", 1, true) then
@@ -772,6 +786,15 @@ PLoop(function(_ENV)
         --- Unsubscribe a message filter, topic-based, return true if successful, otherwise false and error code is needed
         __Arguments__{ NEString/nil }
         function UnsubscribeTopic(self, filter)
+            if self.InMessageReading then
+                if filter then
+                    self.DelayMessageOperations:Enqueue("UnsubscribeTopic", 1, filter)
+                else
+                    self.DelayMessageOperations:Enqueue("UnsubscribeTopic", 0)
+                end
+                return true
+            end
+
             local result
 
             if filter and filter:find("*", 1, true) then
@@ -791,18 +814,31 @@ PLoop(function(_ENV)
         --- Publish the msssage, it'd give a topic if it's topic-based message
         __Arguments__{ NEString, NEString }
         function PublishMessage(self, topic, message)
-            return self:Execute("publish", topic, message) == 1
+            return with(Redis(self.Option))(function(cache)
+                return cache:Execute("publish", topic, message) == 1
+            end)
         end
 
         --- Receive and return the published message
         function ReceiveMessage(self)
-            local subscribed    = rawget(self[1], "_subscribed")
+            local subscribed        = rawget(self[1], "_subscribed")
             if not subscribed then
-                self.TopicSubscribed = false
+                self.TopicSubscribed= false
                 return
             end
 
-            local result        = self:Execute("read_reply")
+            self.InMessageReading   = true
+
+            local result            = self:Execute("read_reply")
+
+            self.InMessageReading   = false
+
+            local queue             = self.DelayMessageOperations
+
+            while queue.Count > 0 do
+                self[queue:Dequeue()](self, queue:Dequeue(queue:Dequeue()))
+            end
+
             if result and result[1] == "message" then
                 return result[2], result[3]
             end
