@@ -814,9 +814,13 @@ PLoop(function(_ENV)
         --- Publish the msssage, it'd give a topic if it's topic-based message
         __Arguments__{ NEString, NEString }
         function PublishMessage(self, topic, message)
-            return with(Redis(self.Option))(function(cache)
-                return cache:Execute("publish", topic, message) == 1
-            end)
+            if rawget(self[1], "_subscribed") then
+                return with(Redis(self.Option))(function(cache)
+                    return cache:Execute("publish", topic, message) == 1
+                end)
+            else
+                return self:Execute("publish", topic, message) == 1
+            end
         end
 
         --- Receive and return the published message
