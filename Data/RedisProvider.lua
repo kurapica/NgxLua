@@ -47,7 +47,8 @@ PLoop(function(_ENV)
             strlower            = string.lower,
             yield               = coroutine.yield,
             safeset             = Toolset.safeset,
-            loadsnippet          = Toolset.loadsnippet,
+            loadsnippet         = Toolset.loadsnippet,
+            with                = with,
 
             serialize           = Serialization.Serialize,
             deserialize         = Serialization.Deserialize,

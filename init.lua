@@ -30,6 +30,7 @@ require "NgxLua.Thread.LockManager"
 
 -- NgxLua.Net
 require "NgxLua.Net.Socket"
+require "NgxLua.Net.WebSocket"
 require "NgxLua.Net.MQTT.MessagePublisher"
 require "NgxLua.Net.MQTT.Client"
 
