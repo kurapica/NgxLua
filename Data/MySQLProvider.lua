@@ -763,4 +763,202 @@ PLoop(function(_ENV)
             return { [0] = db, [1] = opt }, true
         end
     end)
+
+    -----------------------------------------------------------
+    --                  DataBase Operations                  --
+    -----------------------------------------------------------
+    class "MySQLConnection" (function(_ENV)
+        export {
+            List, Enum, Class, Struct, Attribute, Property, Namespace,
+            __DataField__, __DataTable__, IDataContext, IDataEntity,
+            Number, String, Date, NaturalNumber, Boolean, Integer,
+
+            pairs               = pairs,
+            ipairs              = ipairs,
+            tinsert             = table.insert,
+            tsort               = table.sort,
+            tconcat             = table.concat,
+            Debug               = Logger.Default[Logger.LogLevel.Debug],
+        }
+
+        local function parseEntityCls(cache, entityCls)
+            if cache[entityCls] then return cache[entityCls] end
+
+            local fields            = {}
+
+            for name, ftr in Class.GetFeatures(entityCls) do
+                if Property.Validate(ftr) and not Property.IsStatic(ftr) then
+                    local dfield    = Attribute.GetAttachedData(__DataField__, ftr, entityCls)
+                    if dfield then
+                        local ptype = ftr:GetType()
+                        if dfield.foreign then
+                            for k, v in pairs(dfield.foreign.map) do
+                                local org = fields[k]
+                                fields[k] = { name = k, class = ptype, field = v, notnull = dfield.notnull, unique = dfield.unique, fieldindex = dfield.fieldindex }
+                                if org then fields[k].fieldindex = org.fieldindex end
+                            end
+                        else
+                            local dtype = dfield.type
+
+                            if not dtype then
+                                if Struct.IsSubType(ptype, Number) then
+                                    if dfield.autoincr or Struct.IsSubType(ptype, NaturalNumber) then
+                                        dtype = "INT UNSIGNED"
+                                    elseif Struct.IsSubType(ptype, Integer) then
+                                        dtype = "INT"
+                                    else
+                                        dtype = "FLOAT"
+                                    end
+                                elseif Struct.IsSubType(ptype, String) then
+                                    dtype = "VARCHAR(128)"
+                                elseif ptype == Date then
+                                    dtype = "DATETIME"
+                                elseif Struct.IsSubType(ptype, Boolean) then
+                                    dtype = "TINYINT"
+                                elseif Enum.Validate(ptype) then
+                                    local maxnumber, minnumber = 0, 0
+                                    local maxlength
+                                    for k, v in Enum.GetEnumValues(ptype) do
+                                        if type(v) == "number" then
+                                            maxnumber = max(maxnumber, v)
+                                            minnumber = min(minnumber, v)
+                                        else
+                                            maxlength = #v
+                                        end
+                                    end
+                                    if maxlength then
+                                        if maxlength <= 255 then
+                                            dtype = "CHAR(" .. maxlength .. ")"
+                                        else
+                                            dtype = "VARCHAR(" .. maxlength .. ")"
+                                        end
+                                    else
+                                        if minnumber == 0 then
+                                            if maxnumber <= 255 then
+                                                dtype = "TINYINT UNSIGNED"
+                                            elseif maxnumber <= 65535 then
+                                                dtype = "SMALLINT UNSIGNED"
+                                            elseif maxnumber <= 16777215 then
+                                                dtype = "MEDIUMINT UNSIGNED"
+                                            elseif maxnumber <= 4294967295 then
+                                                dtype = "INT UNSIGNED"
+                                            else
+                                                dtype = "BIGINT UNSIGNED"
+                                            end
+                                        else
+                                            if minnumber >= -128 and maxnumber <= 127 then
+                                                dtype = "TINYINT"
+                                            elseif minnumber >= -32768 and maxnumber <= 32767 then
+                                                dtype = "SMALLINT"
+                                            elseif minnumber >= -8388608 and maxnumber <= 8388607 then
+                                                dtype = "MEDIUMINT"
+                                            elseif minnumber >= -2147483648 and maxnumber <= 2147483647 then
+                                                dtype = "INT"
+                                            else
+                                                dtype = "BIGINT"
+                                            end
+                                        end
+                                    end
+                                end
+                            end
+
+                            if dtype then
+                                if fields[name] then
+                                    if fields[name].fieldindex > dfield.fieldindex then
+                                        fields[name].fieldindex = dfield.fieldindex
+                                    end
+                                else
+                                    fields[name] = { name = name, type = dtype, autoincr = dfield.autoincr, notnull = dfield.notnull, unique = dfield.unique, fieldindex = dfield.fieldindex }
+                                end
+                            end
+                        end
+                    end
+                end
+            end
+
+            local temp              = {}
+
+            for name, field in pairs(fields) do
+                tinsert(temp, field)
+            end
+
+            tsort(temp, function(a, b) return a.fieldindex < b.fieldindex end)
+
+            for name, field in pairs(fields) do
+                temp[name]          = field
+            end
+
+            cache[entityCls]        = temp
+        end
+
+        -----------------------------------------------------------
+        --                    DataBase Method                    --
+        -----------------------------------------------------------
+        --- Drop all data tables in the database
+        function DropAllTables(self)
+            local sql           = ("SELECT table_name AS name FROM information_schema.`TABLES` WHERE table_schema='%s'"):format(self.Option.database)
+
+            for _, table in List(self:Query(sql)):GetIterator() do
+                self:Execute("DROP TABLE " .. table.name .. ";")
+            end
+        end
+
+        --- Scan the data context in a namespace, and create all non-existed
+        -- data tables in the namespace, child namespace won't be checked
+        __Arguments__{ NamespaceType }
+        function CreateNonExistTables(self, ns)
+            local cache         = {}
+            for name, contextCls in Namespace.GetNamespaces(ns) do
+                if Class.Validate(contextCls) and Class.IsSubType(contextCls, IDataContext) then
+                    for name, entityCls in Namespace.GetNamespaces(contextCls) do
+                        if Class.Validate(entityCls) and Class.IsSubType(entityCls, IDataEntity) then
+                            parseEntityCls(cache, entityCls)
+                        end
+                    end
+                end
+            end
+
+            for entityCls in pairs(cache) do
+                local set       = Attribute.GetAttachedData(__DataTable__, entityCls)
+                local info      = cache[entityCls]
+                local sql       = {}
+
+                tinsert(sql, "CREATE TABLE IF NOT EXISTS `" .. set.name .. "`(")
+
+                for _, fset in ipairs(info) do
+                    fset.type   = fset.type or cache[fset.class][fset.field].type
+                    tinsert(sql, ("`%s` %s %s %s,"):format(
+                            fset.name,
+                            fset.type,
+                            fset.autoincr and "AUTO_INCREMENT" or fset.notnull and "NOT NULL" or "",
+                            fset.unique and "UNIQUE" or ""
+                        )
+                    )
+                end
+
+                if set.indexes then
+                    local needsep   = false
+                    for _, index in ipairs(set.indexes) do
+                        if needsep then tinsert(sql, ", ") end
+                        local temp  = {}
+
+                        for _, fld in ipairs(index.fields) do
+                            tinsert(temp, "`" .. fld .. "`")
+                        end
+
+                        tinsert(sql, ("%s %s(%s)"):format(
+                            index.primary and "PRIMARY KEY" or index.unique and "UNIQUE" or index.fulltext and "FULLTEXT" or "INDEX",
+                            index.primary and "" or index.name or ("IDX_" .. tconcat(index.fields, "_")),
+                            tconcat(temp, ",")
+                        ))
+
+                        needsep = true
+                    end
+                end
+
+                tinsert(sql, (")ENGINE=%s;"):format(set.engine or "InnoDB"))
+                self:Execute(tconcat(sql, ""))
+            end
+        end
+    end)
 end)
