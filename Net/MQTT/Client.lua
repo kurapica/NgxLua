@@ -89,6 +89,15 @@ PLoop(function(_ENV)
                 if thMessage and status(thMessage) ~= "dead" then
                     th_kill(thMessage)
                 end
+
+                -- Try Send the rest queue packet, only send the disconnect packet
+                while self.PacketQueue.Count > 0 do
+                    local ptype, packet = self.PacketQueue:Dequeue(2)
+                    if ptype == PacketType.DISCONNECT then
+                        _SendPacket(self, ptype, packet)
+                        break
+                    end
+                end
             end, function(err)
                 Debug("[Client]%s closed: %s", self.ClientID, err)
             end)
