@@ -306,7 +306,7 @@ PLoop(function(_ENV)
         function Execute(self, command, ...)
             local cmd           = self[1][strlower(command)]
             if cmd then
-                Debug("[REDIS]%s %s", command, { ... })
+                -- Trace("[REDIS]%s %s", command, { ... })
 
                 local res, err  = cmd(self[1], ...)
                 if err then
