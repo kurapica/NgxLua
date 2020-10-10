@@ -20,7 +20,7 @@ PLoop(function(_ENV)
 
         export {
             WebSocket, System.Net.SocketShutdown, System.Net.TimeoutException, System.Net.SocketException,
-            System.IO.StringReader, Queue,
+            System.Text.StringReader, Queue,
 
             throw               = throw,
             strchar             = string.char,

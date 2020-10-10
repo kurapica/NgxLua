@@ -85,7 +85,7 @@ PLoop(function(_ENV)
             -----------------------------------------------------------
             --                        method                         --
             -----------------------------------------------------------
-            __Arguments__{ String + System.IO.TextWriter, FileHash/FileHash.NONE, NaturalNumber/nil }
+            __Arguments__{ String + System.Text.TextWriter, FileHash/FileHash.NONE, NaturalNumber/nil }
             function Save(self, target, hash, maxsize)
                 local writer
 
