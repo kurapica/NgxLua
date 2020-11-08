@@ -775,6 +775,8 @@ PLoop(function(_ENV)
 
             pairs               = pairs,
             ipairs              = ipairs,
+            max                 = math.max,
+            min                 = math.min,
             tinsert             = table.insert,
             tsort               = table.sort,
             tconcat             = table.concat,
