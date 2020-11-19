@@ -8,8 +8,8 @@
 -- Author       :   kurapica125@outlook.com                                  --
 -- URL          :   http://github.com/kurapica/PLoop                         --
 -- Create Date  :   2018/09/07                                               --
--- Update Date  :   2020/06/04                                               --
--- Version      :   2.0.1                                                    --
+-- Update Date  :   2020/11/19                                               --
+-- Version      :   2.1.1                                                    --
 --===========================================================================--
 PLoop(function(_ENV)
     --- The Redis implementation
@@ -54,6 +54,7 @@ PLoop(function(_ENV)
             deserialize         = Serialization.Deserialize,
 
             stringProvider      = Serialization.StringFormatProvider{ ObjectTypeIgnored = true,  Indent = false, LineBreak = "" },
+            luaProvider         = Serialization.LuaFormatProvider{ ObjectTypeIgnored = true },
 
             Date, System.Data.ConnectionState, XList, Queue, Redis,
         }
@@ -63,7 +64,13 @@ PLoop(function(_ENV)
 
         local function parseValue(value, vtype)
             value               = parseNilValue(value)
-            return type(value) == "string" and deserialize(stringProvider, value, vtype) or value
+            if type(value) == "string" then
+                value           = deserialize(stringProvider, value)
+            end
+            if type(value) == "table" and vtype then
+                value           = deserialize(luaProvider, value, vtype)
+            end
+            return  value
         end
 
         local function fromValue(value)

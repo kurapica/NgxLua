@@ -20,11 +20,12 @@ PLoop(function(_ENV)
 
         export {
             ngx                 = _G.ngx,
+            with                = with,
             pcall               = pcall,
             strtrim             = Toolset.trim,
             ParseJson           = System.Web.ParseJson,
 
-            HttpMethod, NgxLua.HttpFiles
+            HttpMethod, NgxLua.HttpFiles, FileReader
         }
 
         -----------------------------------------------------------
