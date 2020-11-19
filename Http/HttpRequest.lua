@@ -95,7 +95,7 @@ PLoop(function(_ENV)
 
                                             if file then
                                                 file   = FileReader(file, "rb")
-                                                return with(file)(function(reader) reader:ReadToEnd() end)
+                                                return with(file)(function(reader) return reader:ReadToEnd() end)
                                             end
                                         end
 
