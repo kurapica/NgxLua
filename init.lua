@@ -37,16 +37,21 @@ require "NgxLua.Net.MQTT.Client"
 import "NgxLua"
 
 PLoop(function(_ENV)
-    export { ngx = ngx, next = next, pairs = pairs, tostring = tostring }
+    export { ngx = ngx, pcall = pcall, next = next, pairs = pairs, tostring = tostring, System.Context }
 
-    local function getLogHandler(lvl)
-        return function(msg) return ngx.log(lvl, msg) end
-    end
+    local function getLogHandler(lvl) return function(msg) return ngx.log(lvl, msg) end end
+    local function getContext() return ngx.ctx[Context] end
+
+    -----------------------------------------------------------------------
+    --                        System.Context Init                        --
+    -----------------------------------------------------------------------
+    Context.GetCurrentContext   = function() local ok, ret = pcall(getContext) return ok and ret or nil  end
+    Context.SaveCurrentContext  = function(self) ngx.ctx[Context] = self end
 
     -----------------------------------------------------------------------
     --                        System.Date Modify                         --
     -----------------------------------------------------------------------
-    System.Date.GetTimeOfDay = ngx.time
+    System.Date.GetTimeOfDay    = ngx.time
 
     -----------------------------------------------------------------------
     --                          Logger Binding                           --
@@ -62,10 +67,10 @@ PLoop(function(_ENV)
     --                      Global Context Handler                       --
     -----------------------------------------------------------------------
     --- the handler to send cookies
-    IHttpContextHandler {
-        ProcessPhase    = IHttpContextHandler.ProcessPhase.Head,
-        Priority        = IHttpContextHandler.HandlerPriority.Lowest,
-        AsGlobalHandler = true,
+    IHttpContextHandler         {
+        ProcessPhase            = IHttpContextHandler.ProcessPhase.Head,
+        Priority                = IHttpContextHandler.HandlerPriority.Lowest,
+        AsGlobalHandler         = true,
         Process = function(self, context, phase)
             if not context.IsInnerRequest then
                 local cookies = context.Response.Cookies

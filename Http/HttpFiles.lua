@@ -33,7 +33,7 @@ PLoop(function(_ENV)
             tblconat            = table.concat,
             yield               = coroutine.yield,
             RestyUpload         = require "resty.upload",
-            GetContextFromStack = Context.GetContextFromStack,
+            GetCurrentContext   = Context.GetCurrentContext,
 
             HttpFiles
         }
@@ -205,7 +205,7 @@ PLoop(function(_ENV)
 
             form:set_timeout(self.TimeOut)
 
-            local context       = GetContextFromStack(2)
+            local context       = GetCurrentContext()
             local maxsize       = context.Application[MAX_SIZE] or HttpFiles.MaxSize
 
             local name, file, temp
