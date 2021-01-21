@@ -65,7 +65,9 @@ PLoop(function(_ENV)
         local function parseValue(value, vtype)
             value               = parseNilValue(value)
             if type(value) == "string" then
+                local old       = value
                 value           = deserialize(stringProvider, value)
+                if value == nil then value = old end
             end
             if type(value) == "table" and vtype then
                 value           = deserialize(luaProvider, value, vtype)
