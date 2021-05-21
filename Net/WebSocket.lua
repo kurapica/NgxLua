@@ -48,11 +48,14 @@ PLoop(function(_ENV)
         --- The buffer queu
         property "Buffer"            { set = false, default = function() return Queue() end }
 
+        property "ProtocolType"      { type = ProtocolType, default = ProtocolType.TCP }
+
         ---------------------------------------------------
         --                    method                     --
         ---------------------------------------------------
         --- Closes the Socket connection and releases all associated resources
         function Close(self)
+            self.Connected      = false
             return self[0].send_close and self[0]:send_close()
         end
 
@@ -104,11 +107,13 @@ PLoop(function(_ENV)
             if not tcp then throw(SocketException(err)) end
 
             self[0]             = tcp
+            self.Connected      = true
         end
 
         __Arguments__{ Userdata + Table }
         function __ctor(self, sock)
             self[0]             = sock
+            self.Connected      = true
         end
     end)
 end)

@@ -20,8 +20,10 @@ PLoop(function(_ENV)
     __Sealed__() class "NgxLua.Net.Socket" (function(_ENV)
         extend "System.Net.ISocket"
 
+        import "System.Net"
+
         export {
-            Socket, System.Net.SocketShutdown, System.Net.TimeoutException, System.Net.SocketException,
+            Socket, SocketShutdown, TimeoutException, SocketException, ProtocolException, ProtocolType, LingerOption,
 
             throw               = throw,
             yield               = coroutine.yield,
@@ -49,6 +51,8 @@ PLoop(function(_ENV)
         --- Gets or sets a value that specifies the amount of time after which a synchronous Connect call will time out(in seconds)
         property "ConnectTimeout"    { type = Number, default = 1 }
 
+        property "ProtocolType"      { type = ProtocolType, default = ProtocolType.TCP }
+
         ---------------------------------------------------
         --                    method                     --
         ---------------------------------------------------
@@ -60,15 +64,16 @@ PLoop(function(_ENV)
             local ret, err      = self[0]:connect(address, port, options)
             if err == "timeout" then throw(TimeoutException()) end
             if not ret then throw(SocketException(err)) end
+            self.Connected      = true
             return true
         end
 
         --- Do the SSL/TLS handshake on the currently established connection
-        -- @todo
-        function SSLHandShake(self) end
+        function SSLHandShake(self, ...) return self[0]:sslhandshake(...) end
 
         --- Closes the Socket connection and releases all associated resources
         function Close(self)
+            self.Connected      = false
             return self[0].close and self[0]:close()
         end
 
@@ -148,6 +153,7 @@ PLoop(function(_ENV)
 
         __Arguments__{ Userdata + Table }
         function __ctor(self, sock)
+            self.Connected      = true
             self[0]             = sock
         end
     end)
