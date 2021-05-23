@@ -67,10 +67,22 @@ PLoop(function(_ENV)
                 local thMessage
 
                 if self.IsServerSide and self.MessagePublisher then
+                    -- Start the receive message thread
                     self.MessagePublisher.OnTopicSubscribed = function()
-                        thMessage   = th_spawn(processMessagePublisher, self)
+                        if not thMessage then
+                            thMessage   = th_spawn(processMessagePublisher, self)
 
-                        self.MessageCoroutine = thMessage
+                            self.MessageCoroutine = thMessage
+                        end
+                    end
+
+                    -- Stop the receive message thread
+                    self.MessagePublisher.OnTopicUnsubscribed = function(_, _, last)
+                        if last and thMessage then
+                            th_kill(thMessage)
+                            thMessage   = nil
+                            self.MessageCoroutine = nil
+                        end
                     end
                 end
 
@@ -87,6 +99,7 @@ PLoop(function(_ENV)
 
                 -- kill the message publisher if not dead
                 if thMessage and status(thMessage) ~= "dead" then
+                    self.MessageCoroutine = nil
                     th_kill(thMessage)
                 end
 
