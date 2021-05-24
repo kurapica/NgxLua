@@ -18,7 +18,7 @@ PLoop(function(_ENV)
         inherit "System.Net.MQTT.Client"
 
         export {
-            System.Net.MQTT.ClientState, System.Net.MQTT.PacketType, NgxLua.Net.Socket, NgxLua.Net.MQTT.RedisMQTTPublisher, Queue,
+            System.Net.MQTT.ClientState, System.Net.MQTT.PacketType, NgxLua.Net.Socket, Queue,
 
             with                = with,
             th_spawn            = ngx.thread.spawn,
