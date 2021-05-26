@@ -18,8 +18,10 @@ PLoop(function(_ENV)
     __Sealed__() class "NgxLua.Net.WebSocket" (function(_ENV)
         extend "System.Net.ISocket"
 
+        import "System.Net"
+
         export {
-            WebSocket, System.Net.SocketShutdown, System.Net.TimeoutException, System.Net.SocketException,
+            WebSocket, SocketShutdown, TimeoutException, SocketException,
             System.Text.StringReader, Queue,
 
             throw               = throw,

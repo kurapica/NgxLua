@@ -137,6 +137,5 @@ PLoop(function(_ENV)
 
         --- The packet queue to be used in coroutine can't use the cosocket
         property "PacketQueue"      { set = false, default = function(self) return Queue() end }
-
     end)
 end)
