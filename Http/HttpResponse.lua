@@ -24,33 +24,29 @@ PLoop(function(_ENV)
         --                       property                        --
         -----------------------------------------------------------
         __Indexer__(String)
-        property "Header"           { set = function(self, key, value) ngx.header[key] = value end }
+        property "Header"       { set = function(self, key, value) ngx.header[key] = value end }
 
-        property "Write"            { set = false , default = function (self)
+        property "Write"        { set = false , default = function (self)
                 local cache     = {}
                 local index     = 1
                 local length    = 0
 
-                -- Register for finish
-                self._Cache     = cache
-
-                return function (text)
+                return function (text, flush)
                     if text then
                         cache[index] = text
                         length  = length + #text
-                        if length >= BUFF_SIZE then
-                            -- Send out the buff
-                            ngx.print(cache)
-                            ngx.flush()
+                        index   = index + 1
+                    end
 
-                            -- Use a new buff
-                            cache   = {}
-                            index   = 1
-                            length  = 0
-                            self._Cache = cache
-                        else
-                            index   = index + 1
-                        end
+                    if (flush == true and length > 0) or length >= BUFF_SIZE then
+                        -- Send out the buff
+                        ngx.print(cache)
+                        ngx.flush()
+
+                        -- Use a new buff
+                        cache   = {}
+                        index   = 1
+                        length  = 0
                     end
                 end
             end
@@ -61,12 +57,16 @@ PLoop(function(_ENV)
         -----------------------------------------------------------
         --                        method                         --
         -----------------------------------------------------------
+        function Flush(self)
+            self.Write(nil, true)
+        end
+
         function SendHeaders(self)
             return ngx.send_headers()
         end
 
         function Close(self)
-            if self._Cache and self._Cache[1] then ngx.print(self._Cache) ngx.flush() end
+            self:Flush()
             return ngx.eof()
         end
     end)
