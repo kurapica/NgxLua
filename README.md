@@ -27,6 +27,6 @@ It also provide plenty features:
 Take the [PLoop.Browser][] as example, we'll see how to use the [PLoop][] and **NgxLua** in an Openresty server.
 
 [PLoop]: 		 https://github.com/kurapica/PLoop  "PLoop"
-[PLoop.Browser]: https://github.com/kurapica/PLoop.Browser  "PLoop Lib Browser"
+[PLoop.Browser]: https://github.com/kurapica/PLoopSite  "PLoop Lib Browser"
 [nginx]: 		 https://www.nginx.com/ "Nginx"
 [Openresty]: 	 https://github.com/openresty/lua-nginx-module/ "Openresty"
