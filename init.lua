@@ -33,6 +33,7 @@ require "NgxLua.Net.Socket"
 require "NgxLua.Net.WebSocket"
 require "NgxLua.Net.MQTT.MessagePublisher"
 require "NgxLua.Net.MQTT.Client"
+require "NgxLua.Net.MQTT.Proxy"
 
 import "NgxLua"
 
