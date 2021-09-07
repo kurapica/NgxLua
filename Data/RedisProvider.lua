@@ -636,7 +636,7 @@ PLoop(function(_ENV)
         end
 
         --- Remove elements from the sorted set by the score
-        __Arguments__{ NEString, String + Number, String + Number }
+        __Arguments__{ NEString, Number + String, Number + String }
         function ZRemoveByScore(self, zset, min, max)
             return self:Execute("zremrangebyscore", zset, min, max)
         end
