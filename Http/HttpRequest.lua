@@ -18,12 +18,13 @@ PLoop(function(_ENV)
 
         import "System.IO"
 
+
         export {
             ngx                 = _G.ngx,
             with                = with,
             pcall               = pcall,
             strtrim             = Toolset.trim,
-            ParseJson           = System.Web.ParseJson,
+            ParseJson           = Toolset.parsejson,
 
             HttpMethod, NgxLua.HttpFiles, FileReader
         }
