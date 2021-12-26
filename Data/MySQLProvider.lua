@@ -910,11 +910,20 @@ PLoop(function(_ENV)
         __Arguments__{ NamespaceType }
         function CreateNonExistTables(self, ns)
             local cache         = {}
-            for name, contextCls in Namespace.GetNamespaces(ns) do
-                if Class.Validate(contextCls) and Class.IsSubType(contextCls, IDataContext) then
-                    for name, entityCls in Namespace.GetNamespaces(contextCls) do
-                        if Class.Validate(entityCls) and Class.IsSubType(entityCls, IDataEntity) then
-                            parseEntityCls(cache, entityCls)
+
+            if Class.Validate(ns) and Class.IsSubType(ns, IDataContext) then
+                for name, entityCls in Namespace.GetNamespaces(ns) do
+                    if Class.Validate(entityCls) and Class.IsSubType(entityCls, IDataEntity) then
+                        parseEntityCls(cache, entityCls)
+                    end
+                end
+            else
+                for name, contextCls in Namespace.GetNamespaces(ns) do
+                    if Class.Validate(contextCls) and Class.IsSubType(contextCls, IDataContext) then
+                        for name, entityCls in Namespace.GetNamespaces(contextCls) do
+                            if Class.Validate(entityCls) and Class.IsSubType(entityCls, IDataEntity) then
+                                parseEntityCls(cache, entityCls)
+                            end
                         end
                     end
                 end
@@ -926,6 +935,56 @@ PLoop(function(_ENV)
                 local sql       = {}
 
                 tinsert(sql, "CREATE TABLE IF NOT EXISTS `" .. set.name .. "`(")
+
+                for _, fset in ipairs(info) do
+                    fset.type   = fset.type or cache[fset.class][fset.field].type
+                    tinsert(sql, ("`%s` %s %s %s,"):format(
+                            fset.name,
+                            fset.type,
+                            fset.autoincr and "AUTO_INCREMENT" or fset.notnull and "NOT NULL" or "",
+                            fset.unique and "UNIQUE" or ""
+                        )
+                    )
+                end
+
+                if set.indexes then
+                    local needsep   = false
+                    for _, index in ipairs(set.indexes) do
+                        if needsep then tinsert(sql, ", ") end
+                        local temp  = {}
+
+                        for _, fld in ipairs(index.fields) do
+                            tinsert(temp, "`" .. fld .. "`")
+                        end
+
+                        tinsert(sql, ("%s %s(%s)"):format(
+                            index.primary and "PRIMARY KEY" or index.unique and "UNIQUE" or index.fulltext and "FULLTEXT" or "INDEX",
+                            index.primary and "" or index.name or ("IDX_" .. tconcat(index.fields, "_")),
+                            tconcat(temp, ",")
+                        ))
+
+                        needsep = true
+                    end
+                end
+
+                tinsert(sql, (")ENGINE=%s;"):format(set.engine or "InnoDB"))
+                self:Execute(tconcat(sql, ""))
+            end
+        end
+
+        --- Create non-existed data tables for the data collection, useful for dynamic tables
+        __Arguments__{ DataCollection }
+        function CreateNonExistTables(self, col)
+            local cache         = {}
+
+            parseEntityCls(cache, col:GetDataEntity())
+
+            for entityCls in pairs(cache) do
+                local set       = Attribute.GetAttachedData(__DataTable__, entityCls)
+                local info      = cache[entityCls]
+                local sql       = {}
+
+                tinsert(sql, "CREATE TABLE IF NOT EXISTS `" .. col:GetTableName() .. "`(")
 
                 for _, fset in ipairs(info) do
                     fset.type   = fset.type or cache[fset.class][fset.field].type

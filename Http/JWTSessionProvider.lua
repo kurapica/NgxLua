@@ -44,6 +44,9 @@ PLoop(function(_ENV)
         --- The samesite settings of the cookie
         property "SameSite"     { type = SameSiteValue, default = SameSiteValue.Lax }
 
+        --- Whether save the JWT to the cookie
+        property "UseCookie"    { type = Boolean, default = true }
+
         -----------------------------------------------------------------------
         --                              method                               --
         -----------------------------------------------------------------------
