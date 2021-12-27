@@ -914,7 +914,10 @@ PLoop(function(_ENV)
             if Class.Validate(ns) and Class.IsSubType(ns, IDataContext) then
                 for name, entityCls in Namespace.GetNamespaces(ns) do
                     if Class.Validate(entityCls) and Class.IsSubType(entityCls, IDataEntity) then
-                        parseEntityCls(cache, entityCls)
+                        local set = Attribute.GetAttachedData(__DataTable__, entityCls)
+                        if not set.name:find("%", 1, true) then
+                            parseEntityCls(cache, entityCls)
+                        end
                     end
                 end
             else
@@ -922,7 +925,10 @@ PLoop(function(_ENV)
                     if Class.Validate(contextCls) and Class.IsSubType(contextCls, IDataContext) then
                         for name, entityCls in Namespace.GetNamespaces(contextCls) do
                             if Class.Validate(entityCls) and Class.IsSubType(entityCls, IDataEntity) then
-                                parseEntityCls(cache, entityCls)
+                                local set = Attribute.GetAttachedData(__DataTable__, entityCls)
+                                if not set.name:find("%", 1, true) then
+                                    parseEntityCls(cache, entityCls)
+                                end
                             end
                         end
                     end
