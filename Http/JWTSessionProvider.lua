@@ -14,12 +14,13 @@
 --===========================================================================--
 
 PLoop(function(_ENV)
+    local ok, jwt               = pcall(require, "resty.jwt")
+    if not jwt then return end
+
     __Sealed__() class "NgxLua.JWTSessionIDManager" (function (_ENV)
         extend "System.Web.ISessionIDManager"
 
         export{ "type", "tonumber", Date, HttpCookie.SameSiteValue, System.Web.HttpSession }
-
-        local jwt               = require "resty.jwt"
 
         -----------------------------------------------------------------------
         --                         inherit property                          --
