@@ -15,7 +15,7 @@
 
 PLoop(function(_ENV)
     local ok, jwt               = pcall(require, "resty.jwt")
-    if not jwt then return end
+    if not ok then return end
 
     __Sealed__() class "NgxLua.JWTSessionIDManager" (function (_ENV)
         extend "System.Web.ISessionIDManager"
