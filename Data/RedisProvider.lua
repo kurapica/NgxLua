@@ -844,8 +844,12 @@ PLoop(function(_ENV)
                 self[queue:Dequeue()](self, queue:Dequeue(queue:Dequeue()))
             end
 
-            if result and result[1] == "message" then
-                return result[2], result[3]
+            if result then
+                if result[1] == "message" then
+                    return result[2], result[3]
+                elseif result[1] == "pmessage" then
+                    return result[3], result[4]
+                end
             end
         end
 
