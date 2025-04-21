@@ -47,7 +47,6 @@ PLoop(function(_ENV)
     --                        System.Context Init                        --
     -----------------------------------------------------------------------
     Context.GetCurrentContext   = function() local ok, ret = pcall(getContext) return ok and ret or nil  end
-    Context.SaveCurrentContext  = function(self) ngx.ctx[Context] = self end
 
     -----------------------------------------------------------------------
     --                        System.Date Modify                         --

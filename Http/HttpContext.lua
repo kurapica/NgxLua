@@ -13,8 +13,20 @@
 --===========================================================================--
 
 PLoop(function(_ENV)
-    __Sealed__() class "NgxLua.HttpContext" (function (_ENV)
+    --- Used to store the context in ngx
+    __Sealed__()
+    interface "NgxLua.IContextHolder"   (function(_ENV)
+        export { ngx = ngx, Context }
+
+        function __init(self)
+            ngx.ctx[Context]            = self
+        end
+    end)
+
+    __Sealed__()
+    class "NgxLua.HttpContext"          (function (_ENV)
         inherit (System.Web.HttpContext)
+        extend  (NgxLua.IContextHolder)
 
         export { NgxLua.HttpRequest, NgxLua.HttpResponse }
 
